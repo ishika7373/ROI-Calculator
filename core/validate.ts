@@ -32,7 +32,7 @@ export type Coerced =
  *
  * Accepts thousands separators, surrounding whitespace and a leading currency
  * symbol, because spreadsheets and CSV exports routinely produce them. Rejects
- * everything else — "60k" and "n/a" are not numbers, and guessing what they meant
+ * everything else, "60k" and "n/a" are not numbers, and guessing what they meant
  * is exactly what this engine must never do.
  */
 export function coerceNumber(raw: Raw): Coerced {
@@ -111,7 +111,7 @@ export interface ValidationOutcome {
  *
  * The brief names area, resources, shiftHours and workDays. Salary and targetArea
  * are extended to the same rule because a zero in either produces a division by
- * zero downstream — zero salary makes manualCost zero, which makes costRatio
+ * zero downstream, zero salary makes manualCost zero, which makes costRatio
  * infinite, and zero targetArea collapses the target scenario to 0/0. The brief's
  * stronger requirement is that no input combination may yield NaN or Infinity, so
  * that requirement wins.

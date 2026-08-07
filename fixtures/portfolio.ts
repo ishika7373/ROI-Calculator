@@ -5,7 +5,7 @@ import type { Params } from '../core/types.js';
  *
  * Ten sites carried over from the supplied input workbook, plus two constructed
  * to exercise behaviour twenty happy rows cannot reach. Every column name here is
- * spelled the way a real workbook spells it — including the `$/yr` abbreviation,
+ * spelled the way a real workbook spells it, including the `$/yr` abbreviation,
  * which differs from the brief's `$/year` and is what forces the header matcher
  * to be alias-tolerant rather than merely case-tolerant.
  *
@@ -42,7 +42,7 @@ export const PORTFOLIO: RawRow[] = [
     'Shift Hours': 8,
     'Working Days': 300,
     Region: 'Europe',
-    Notes: 'Baseline — matches the published acceptance figures',
+    Notes: 'Baseline, matches the published acceptance figures',
   },
   {
     Customer: 'BP',
@@ -97,7 +97,7 @@ export const PORTFOLIO: RawRow[] = [
     Notes: 'Mega facility',
   },
   {
-    // Scales to 168.75 resources — the fractional-extrapolation case.
+    // Scales to 168.75 resources, the fractional-extrapolation case.
     Customer: 'Siemens Energy',
     Site: 'Wind Farm',
     Industry: 'Energy',
@@ -108,7 +108,7 @@ export const PORTFOLIO: RawRow[] = [
     'Shift Hours': 8,
     'Working Days': 310,
     Region: 'Europe',
-    Notes: 'Renewable assets — target scaling is fractional (168.75)',
+    Notes: 'Renewable assets, target scaling is fractional (168.75)',
   },
   {
     Customer: 'Tata Steel',
@@ -178,7 +178,7 @@ export const PORTFOLIO: RawRow[] = [
     'Shift Hours': 8,
     'Working Days': 260,
     Region: 'Europe',
-    Notes: 'Negative saving at current area — labour case does not stand alone',
+    Notes: 'Negative saving at current area, labour case does not stand alone',
   },
   {
     // Missing a required field. Must reach Exceptions and the summary, never a guess.

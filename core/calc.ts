@@ -5,7 +5,7 @@ import { ceilCount } from './round.js';
  * The model. This is the only arithmetic in the repository.
  *
  * Nothing here imports `format.ts`. Display rounding must never feed back into a
- * calculation — that is how an audit table stops reconciling with its own inputs.
+ * calculation, that is how an audit table stops reconciling with its own inputs.
  */
 
 export interface ScenarioArgs {
@@ -34,7 +34,7 @@ export function computeScenario(args: ScenarioArgs): ScenarioMetrics {
   const hoursPerDock = params.dockHours * params.dockDays;
 
   // A dock is a purchase, so it rounds up. The whole-dock count is what the
-  // operator ratio is then applied to — a ratio is never applied to a fractional
+  // operator ratio is then applied to, a ratio is never applied to a fractional
   // dock count, and the exact figure is carried through for the audit trail.
   const docksExact = manualHours / (hoursPerDock * params.subFactor);
   const docks = ceilCount(docksExact);
@@ -57,7 +57,7 @@ export function computeScenario(args: ScenarioArgs): ScenarioMetrics {
 
   const hoursMultiple = hoursPerDock / (shiftHours * workDays);
 
-  // Display metrics. The model does not price per unit area — these divide by it,
+  // Display metrics. The model does not price per unit area, these divide by it,
   // which is where a unit mismatch surfaces as a visibly absurd number.
   const manualCostPerArea = manualCost / areaUsed;
   const autoCostPerArea = autoCost / areaUsed;

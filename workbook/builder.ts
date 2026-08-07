@@ -61,7 +61,7 @@ export interface SheetOptions {
   widths?: number[];
 }
 
-/** Restrained header band — the only fill beyond the conditional scales. */
+/** Restrained header band, the only fill beyond the conditional scales. */
 const HEADER_FILL = 'FFE4EDEF';
 
 export function writeSheet(wb: Workbook, opts: SheetOptions): Worksheet {
@@ -142,7 +142,7 @@ export interface ChartSpec {
   numberFormat?: string;
   /**
    * Stable index for this chart within the workbook. Axis ids derive from it so
-   * that two builds of the same data are byte-identical — module-level counters
+   * that two builds of the same data are byte-identical, module-level counters
    * would drift between calls in the same process.
    */
   chartIndex: number;
@@ -208,7 +208,7 @@ export function addBoundChart(ws: Worksheet, spec: ChartSpec): void {
 
 /**
  * Conditional formatting. Applied to Cost Ratio and Payback Months only, as a
- * restrained two-point scale — moss where the figure is favourable, amber tint
+ * restrained two-point scale, moss where the figure is favourable, amber tint
  * where it is not.
  */
 export function addRatioScale(ws: Worksheet, sqref: string, priority: number): void {

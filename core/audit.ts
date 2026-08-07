@@ -5,12 +5,12 @@ import type { AuditLine, Params, ScenarioMetrics } from './types.js';
  *
  * A customer engineer must be able to recompute the entire model on paper from
  * these lines alone. Each carries the formula in words, the same formula with this
- * site's actual numbers substituted, and the computed value — for both scenarios.
+ * site's actual numbers substituted, and the computed value, for both scenarios.
  */
 
 /** Compact number rendering for the working-out strings. Not used in any calculation. */
 function n(x: number): string {
-  if (!Number.isFinite(x)) return '—';
+  if (!Number.isFinite(x)) return ', ';
   const abs = Math.abs(x);
   if (Number.isInteger(x)) return x.toLocaleString('en-US');
   const dp = abs < 10 ? 4 : 2;
@@ -57,7 +57,7 @@ export function buildAudit(
       'factor',
       (m) =>
         m.scenario === 'current'
-          ? '1.0 by definition — this is the present state'
+          ? '1.0 by definition, this is the present state'
           : `${n(target.areaUsed)} ÷ ${n(current.areaUsed)} = ${n(m.scaleFactor)}`,
       (m) => m.scaleFactor,
     ),
@@ -69,7 +69,7 @@ export function buildAudit(
       (m) =>
         m.scenario === 'current'
           ? `${n(m.resources)} as supplied by the customer`
-          : `${n(current.resources)} × ${n(m.scaleFactor)} = ${n(m.resources)} (kept fractional — an extrapolation of the customer's headcount, not a purchase)`,
+          : `${n(current.resources)} × ${n(m.scaleFactor)} = ${n(m.resources)} (kept fractional, an extrapolation of the customer's headcount, not a purchase)`,
       (m) => m.resources,
     ),
     line(
@@ -118,7 +118,7 @@ export function buildAudit(
     line(
       'docks',
       'Docks required',
-      'docks before rounding, rounded up — a dock is a purchase, so part of one is a whole one',
+      'docks before rounding, rounded up, a dock is a purchase, so part of one is a whole one',
       'count',
       (m) => `round up ${n(m.docksExact)} = ${n(m.docks)}`,
       (m) => m.docks,
@@ -134,7 +134,7 @@ export function buildAudit(
     line(
       'operators',
       'Operators required',
-      'operators before rounding, rounded up — an operator is a hire',
+      'operators before rounding, rounded up, an operator is a hire',
       'count',
       (m) => `round up ${n(m.operatorsExact)} = ${n(m.operators)}`,
       (m) => m.operators,
@@ -182,7 +182,7 @@ export function buildAudit(
       'months',
       (m) =>
         m.paybackMonths === null
-          ? 'no payback at these inputs — the model does not save money here'
+          ? 'no payback at these inputs, the model does not save money here'
           : `${n(params.implCost)} ÷ (${n(m.saving)} ÷ 12) = ${n(m.paybackMonths)}`,
       (m) => m.paybackMonths,
     ),
@@ -198,7 +198,7 @@ export function buildAudit(
     line(
       'manualCostPerArea',
       `Manual cost per ${areaUnit}`,
-      'manual cost ÷ area priced — a display metric, not a driver of the model',
+      'manual cost ÷ area priced, a display metric, not a driver of the model',
       'perArea',
       (m) => `${n(m.manualCost)} ÷ ${n(m.areaUsed)} = ${n(m.manualCostPerArea)}`,
       (m) => m.manualCostPerArea,
@@ -206,7 +206,7 @@ export function buildAudit(
     line(
       'autoCostPerArea',
       `Autonomous cost per ${areaUnit}`,
-      'autonomous cost ÷ area priced — a display metric, not a driver of the model',
+      'autonomous cost ÷ area priced, a display metric, not a driver of the model',
       'perArea',
       (m) => `${n(m.autoCost)} ÷ ${n(m.areaUsed)} = ${n(m.autoCostPerArea)}`,
       (m) => m.autoCostPerArea,
@@ -214,7 +214,7 @@ export function buildAudit(
     line(
       'savingPerArea',
       `Annual saving per ${areaUnit}`,
-      'annual saving ÷ area priced — a display metric, not a driver of the model',
+      'annual saving ÷ area priced, a display metric, not a driver of the model',
       'perArea',
       (m) => `${n(m.saving)} ÷ ${n(m.areaUsed)} = ${n(m.savingPerArea)}`,
       (m) => m.savingPerArea,

@@ -81,7 +81,7 @@ async function main() {
   const bytes = await workbookToBytes(wb);
   await writeFile(output, bytes);
 
-  stdout.write(`\nDrone ROI — batch\n`);
+  stdout.write(`\nDrone ROI, batch\n`);
   stdout.write(`  source      ${source}\n`);
   stdout.write(`  rows        ${scored.length}\n`);
   stdout.write(`  priced      ${priced}\n`);
@@ -92,11 +92,11 @@ async function main() {
 
   for (const s of scored) {
     if (s.result.status === 'ok') continue;
-    stdout.write(`  ! ${s.customer} — ${s.site}: ${s.result.issues.map((i) => i.reason).join('; ')}\n`);
+    stdout.write(`  ! ${s.customer}, ${s.site}: ${s.result.issues.map((i) => i.reason).join('; ')}\n`);
   }
   for (const s of scored) {
     for (const w of s.result.warnings) {
-      stdout.write(`  ~ ${s.customer} — ${s.site}: ${w.message}\n`);
+      stdout.write(`  ~ ${s.customer}, ${s.site}: ${w.message}\n`);
     }
   }
   stdout.write('\n');

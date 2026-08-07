@@ -93,7 +93,7 @@ describe('charts are native and range-bound', () => {
     }
   });
 
-  it('spans every data row — ranges are computed, never hardcoded', () => {
+  it('spans every data row, ranges are computed, never hardcoded', () => {
     const expectedLast = PORTFOLIO.length + 1; // header row plus one row per site
     for (const part of chartParts()) {
       const ranges = [...parts[part]!.matchAll(/<c:f>([^<]*:[^<]*)<\/c:f>/g)].map((m) => m[1]!);

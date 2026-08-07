@@ -23,7 +23,7 @@ export const DEFAULT_PARAMS: Readonly<Params> = Object.freeze({
  * Discovery defaults.
  *
  * These populate the batch fixture and the reset-to-defaults control. The web app
- * itself pre-fills nothing on the discovery side — the customer's own numbers
+ * itself pre-fills nothing on the discovery side, the customer's own numbers
  * produce the baseline, which is the entire point of the exercise.
  */
 export const DEFAULT_DISCOVERY: Readonly<Required<Pick<DiscoveryInputs,
@@ -45,8 +45,8 @@ export const DEFAULT_AREA_UNIT = 'sq ft';
 /**
  * Scale factors outside this band are warned about but still priced.
  *
- * The band catches a unit mismatch — square feet against acres is a factor near
- * 43,560 — without refusing a genuine tenfold expansion, which is a real scenario.
+ * The band catches a unit mismatch, square feet against acres is a factor near
+ * 43,560, without refusing a genuine tenfold expansion, which is a real scenario.
  */
 export const SCALE_FACTOR_MIN = 0.1;
 export const SCALE_FACTOR_MAX = 50;

@@ -1,7 +1,7 @@
 /**
  * Shared types for the ROI calculation engine.
  *
- * This module — and every other file under /core — is pure: no DOM, no file IO,
+ * This module, and every other file under /core, is pure: no DOM, no file IO,
  * no framework imports, no dependencies. Both the web app and the batch CLI
  * import the same compiled code, which is what makes the parity test meaningful
  * rather than ceremonial.
@@ -47,7 +47,7 @@ export interface Params {
   dockCost: number;
   /** Cost per operator per year. */
   opCost: number;
-  /** Docks per operator today. May be fractional — see `ceilCount`. */
+  /** Docks per operator today. May be fractional, see `ceilCount`. */
   ratioNow: number;
   /** Docks per operator at scale. May be fractional. */
   ratioScale: number;
@@ -62,7 +62,7 @@ export type ScenarioKey = 'current' | 'target';
 /** Every intermediate and output value for one scenario. */
 export interface ScenarioMetrics {
   scenario: ScenarioKey;
-  /** The area this scenario is priced at — `area` for current, `targetArea` for target. */
+  /** The area this scenario is priced at, `area` for current, `targetArea` for target. */
   areaUsed: number;
   /** 1 for the current scenario; `targetArea / area` for the target scenario. */
   scaleFactor: number;
@@ -99,7 +99,7 @@ export interface ScenarioMetrics {
   costRatio: number;
   /** `null` only when autoCost is zero. Negative is a valid, meaningful answer. */
   returnPct: number | null;
-  /** `null` when saving is zero or negative — there is no payback to report. */
+  /** `null` when saving is zero or negative, there is no payback to report. */
   paybackMonths: number | null;
   hoursMultiple: number;
 
@@ -134,7 +134,7 @@ export interface Warning {
 export type Tier = 'strong' | 'viable' | 'no-standalone' | 'marginal';
 
 export type AuditKind =
-  /** A whole procured count — docks, operators. Rendered without decimals. */
+  /** A whole procured count, docks, operators. Rendered without decimals. */
   | 'count'
   /** A pre-ceiling count. Fractional by nature, rendered with decimals. */
   | 'countExact'
@@ -209,6 +209,6 @@ export interface ModelIncomplete {
 /**
  * A discriminated union rather than nullable numbers, so that neither mode can
  * accidentally render or write a zero where an answer is missing. The field does
- * not exist to be read — a guess is unavailable at the type level.
+ * not exist to be read, a guess is unavailable at the type level.
  */
 export type ModelResult = ModelOk | ModelIncomplete;

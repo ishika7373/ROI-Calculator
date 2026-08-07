@@ -5,8 +5,7 @@ import { DEFAULT_PARAMS } from './defaults.js';
 /**
  * Header matching and parameter resolution.
  *
- * Lives in /core because both delivery modes must resolve a row identically —
- * if the web app and the CLI disagreed about which column fed which field, the
+ * Lives in /core because both delivery modes must resolve a row identically, * if the web app and the CLI disagreed about which column fed which field, the
  * parity test would compare two different questions.
  */
 
@@ -64,7 +63,7 @@ export interface HeaderMapping {
   passthrough: string[];
   /** required fields with no matching header */
   missing: string[];
-  /** fields matched by more than one header — an error, never a coin flip */
+  /** fields matched by more than one header, an error, never a coin flip */
   ambiguous: Record<string, string[]>;
 }
 
@@ -154,7 +153,7 @@ export type ParamResolution = Record<keyof Params, ResolvedParam>;
  *
  * Order: per-row override, then a Parameters sheet, then the built-in default.
  * A tier that supplies a present-but-invalid value does not fall through
- * silently — the rejection is recorded and carried into the Audit Trail.
+ * silently, the rejection is recorded and carried into the Audit Trail.
  */
 export function resolveParams(
   row: Record<string, Raw>,
@@ -185,7 +184,7 @@ export function resolveParams(
 
     let rejected: string | undefined;
 
-    // Tier 1 — per-row override.
+    // Tier 1, per-row override.
     const header = mapping.resolved[key];
     const rawValue = header ? row[header] : undefined;
     if (rawValue !== undefined && rawValue !== null && rawValue !== '') {
@@ -200,7 +199,7 @@ export function resolveParams(
       })`;
     }
 
-    // Tier 2 — Parameters sheet.
+    // Tier 2, Parameters sheet.
     const sheetValue = sheet[key];
     if (typeof sheetValue === 'number' && Number.isFinite(sheetValue) && sheetValue > 0) {
       params[key] = sheetValue;
@@ -208,7 +207,7 @@ export function resolveParams(
       continue;
     }
 
-    // Tier 3 — built-in default.
+    // Tier 3, built-in default.
     resolution[key] = {
       value: defaults[key],
       source: 'built-in default',

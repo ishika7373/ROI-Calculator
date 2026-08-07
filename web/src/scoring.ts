@@ -13,7 +13,7 @@ import type { RawRow } from '../../fixtures/portfolio.js';
  * Portfolio scoring.
  *
  * This is the same path the CLI takes: map headers, resolve parameters, call
- * runModel. Nothing here computes anything itself — if it did, the two modes
+ * runModel. Nothing here computes anything itself, if it did, the two modes
  * could drift and the parity test would stop meaning anything.
  */
 
@@ -24,6 +24,11 @@ export interface ScoredSite {
   industry: string;
   /** Unrecognised columns, carried through untouched and in original order. */
   passthrough: Record<string, string>;
+  /**
+   * The six discovery values as resolved through the header matcher, so the app
+   * can load any workbook's row regardless of how its columns were spelled.
+   */
+  discovery: Record<'area' | 'resources' | 'salary' | 'targetArea' | 'shiftHours' | 'workDays', string>;
   raw: RawRow;
   result: ModelResult;
   resolution: ParamResolution;
@@ -58,7 +63,18 @@ export function scorePortfolio(rows: RawRow[] = PORTFOLIO): ScoredSite[] {
   return rows.map((raw, index) => {
     const row = raw as unknown as Record<string, Raw>;
     const { params, resolution } = resolveParams(row, mapping, PARAMETERS_SHEET, DEFAULT_PARAMS);
-    const result = runModel(readDiscovery(row, mapping), params);
+    const inputs = readDiscovery(row, mapping);
+    const result = runModel(inputs, params);
+
+    const str = (v: Raw) => (v === null || v === undefined ? '' : String(v));
+    const discovery = {
+      area: str(inputs.area),
+      resources: str(inputs.resources),
+      salary: str(inputs.salary),
+      targetArea: str(inputs.targetArea),
+      shiftHours: str(inputs.shiftHours),
+      workDays: str(inputs.workDays),
+    };
 
     const passthrough: Record<string, string> = {};
     for (const header of mapping.passthrough) {
@@ -69,10 +85,11 @@ export function scorePortfolio(rows: RawRow[] = PORTFOLIO): ScoredSite[] {
 
     return {
       index,
-      customer: raw.Customer,
-      site: raw.Site,
-      industry: raw.Industry,
+      customer: String(raw.Customer ?? `Row ${index + 1}`),
+      site: String(raw.Site ?? ''),
+      industry: String(raw.Industry ?? ''),
       passthrough,
+      discovery,
       raw,
       result,
       resolution,

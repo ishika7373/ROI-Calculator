@@ -27,11 +27,11 @@ export function download(filename: string, data: BlobPart, mime: string): void {
 /** CSV of the current scenario, including the full audit trail. */
 export function scenarioCsv(result: ModelResult, params: Params, label: string): string {
   const rows: unknown[][] = [
-    ['Autonomous Inspection ROI — scenario export'],
+    ['Autonomous Inspection ROI: scenario export'],
     ['Scenario', label],
     ['Generated', new Date().toISOString()],
     [],
-    ['Autonomous parameters (supplied by us — placeholders, not commercial figures)'],
+    ['Autonomous parameters (supplied by us: placeholders, not commercial figures)'],
     ['Dock hours per day', params.dockHours],
     ['Operating days per year', params.dockDays],
     ['Substitution factor', params.subFactor],
@@ -65,7 +65,7 @@ export function scenarioCsv(result: ModelResult, params: Params, label: string):
     rows.push([l.label, l.formula, l.current, l.target, l.currentWorking, l.targetWorking]);
   }
   rows.push([]);
-  rows.push(['Sensitivity — docks per operator (current area)']);
+  rows.push(['Sensitivity by docks per operator (current area)']);
   rows.push(['Docks per operator', 'Docks', 'Operators', 'Autonomous cost', 'Cost ratio']);
   for (const s of result.sensitivity) {
     rows.push([s.ratio, s.docks, s.operators, s.autoCost, s.costRatio]);
@@ -73,7 +73,7 @@ export function scenarioCsv(result: ModelResult, params: Params, label: string):
   return toCsv(rows);
 }
 
-/** CSV of the whole portfolio — one row per site, incomplete rows genuinely blank. */
+/** CSV of the whole portfolio: one row per site, incomplete rows genuinely blank. */
 export function portfolioCsv(scored: ScoredSite[]): string {
   const passthroughKeys = [...new Set(scored.flatMap((s) => Object.keys(s.passthrough)))];
 
@@ -134,7 +134,7 @@ export function portfolioCsv(scored: ScoredSite[]): string {
   return toCsv(rows);
 }
 
-/** Exceptions CSV — invalid rows with the specific reason each. */
+/** Exceptions CSV. Invalid rows with the specific reason each. */
 export function exceptionsCsv(scored: ScoredSite[]): string {
   const rows: unknown[][] = [['Customer', 'Site', 'Field', 'Reason', 'Kind']];
   for (const s of scored) {

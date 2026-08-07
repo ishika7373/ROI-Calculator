@@ -31,7 +31,7 @@ const defaults = () => runModel({ ...DEFAULT_DISCOVERY });
 // 1. Acceptance: defaults, current area
 // ---------------------------------------------------------------------------
 
-describe('acceptance — defaults, current area', () => {
+describe('acceptance, defaults, current area', () => {
   const r = () => ok(defaults()).current;
 
   it('manualHours = 240,000', () => expect(r().manualHours).toBe(240_000));
@@ -65,7 +65,7 @@ describe('acceptance — defaults, current area', () => {
     expect(formatMonths(r().paybackMonths)).toBe('0.5');
   });
 
-  it('hourlyRate = 33.33 (asserted directly — it appears in no acceptance figure)', () => {
+  it('hourlyRate = 33.33 (asserted directly, it appears in no acceptance figure)', () => {
     expect(r().hourlyRate).toBeCloseTo(80_000 / 2_400, 10);
     expect(roundHalfUp(r().hourlyRate, 2)).toBe(33.33);
   });
@@ -75,7 +75,7 @@ describe('acceptance — defaults, current area', () => {
 // 2. Acceptance: defaults, target area
 // ---------------------------------------------------------------------------
 
-describe('acceptance — defaults, target area', () => {
+describe('acceptance, defaults, target area', () => {
   const r = () => ok(defaults()).target;
 
   it('manualCost = $16,000,000', () => expect(r().manualCost).toBe(16_000_000));
@@ -91,7 +91,7 @@ describe('acceptance — defaults, target area', () => {
 // 3. Acceptance: sensitivity
 // ---------------------------------------------------------------------------
 
-describe('acceptance — sensitivity at current area', () => {
+describe('acceptance, sensitivity at current area', () => {
   const rows = () => ok(defaults()).sensitivity;
 
   it('6:1 gives autoCost $1,660,000', () => {
@@ -116,7 +116,7 @@ describe('acceptance — sensitivity at current area', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 4. Named rule tests — a failure names the rule that broke
+// 4. Named rule tests, a failure names the rule that broke
 // ---------------------------------------------------------------------------
 
 describe('RULE: ceiling is non-commutative with linear scaling', () => {
@@ -138,7 +138,7 @@ describe('RULE: the target scenario substitutes ratioScale for ratioNow', () => 
     expect(r.target.operators).not.toBe(14);
   });
 
-  it('the current scenario still uses ratioNow — no cross-contamination', () => {
+  it('the current scenario still uses ratioNow, no cross-contamination', () => {
     const r = ok(defaults());
     expect(r.current.ratioUsed).toBe(DEFAULT_PARAMS.ratioNow);
     expect(r.current.operators).toBe(7);
@@ -165,7 +165,7 @@ describe('RULE: anything we buy or hire rounds up; extrapolations stay continuou
     expect(r.target.operators).toBe(Math.ceil(r.target.docks / DEFAULT_PARAMS.ratioScale));
   });
 
-  it('scaled resources are never rounded — 168.75 stays 168.75', () => {
+  it('scaled resources are never rounded, 168.75 stays 168.75', () => {
     const r = ok(
       runModel({
         area: 80_000,
@@ -201,7 +201,7 @@ describe('RULE: the operator ratio is applied to whole docks', () => {
     expect(disagreements).toBe(0);
   });
 
-  it('bites at fractional ratios — 5.5 docks per operator', () => {
+  it('bites at fractional ratios, 5.5 docks per operator', () => {
     const params: Params = { ...DEFAULT_PARAMS, ratioNow: 5.5 };
     const r = ok(runModel({ ...DEFAULT_DISCOVERY }, params));
     // 28 whole docks / 5.5 = 5.09 -> 6 operators.
@@ -238,7 +238,7 @@ describe('RULE: substitution factor moves docks in the stated direction', () => 
     }
   });
 
-  it('is not ignored — 1.0 is the only value where it is invisible', () => {
+  it('is not ignored, 1.0 is the only value where it is invisible', () => {
     expect(docksAt(1.0)).not.toBe(docksAt(1.5));
   });
 });
@@ -307,7 +307,7 @@ describe('rounding', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 6. Edge cases — none may yield NaN, Infinity, a crash or a silent zero
+// 6. Edge cases, none may yield NaN, Infinity, a crash or a silent zero
 // ---------------------------------------------------------------------------
 
 describe('edge cases', () => {
@@ -431,7 +431,7 @@ describe('no input combination yields NaN or Infinity in any output field', () =
 // ---------------------------------------------------------------------------
 
 describe('negative saving is a real answer, not a failure', () => {
-  // Two resources cannot cover the dock cost — autonomous costs more than manual.
+  // Two resources cannot cover the dock cost, autonomous costs more than manual.
   const negative = () =>
     ok(
       runModel({
@@ -490,7 +490,7 @@ describe('recommendation tiers', () => {
     expect(ok(defaults()).recommendation).toBe('Strong case, proceed to scoped study');
   });
 
-  it('requires BOTH conditions in tier 1 — not either', () => {
+  it('requires BOTH conditions in tier 1, not either', () => {
     // Cost ratio qualifies, payback does not. OR would wrongly give 'strong'.
     expect(tierFor(0.3, 18)).toBe('viable');
     // Payback qualifies, cost ratio does not.
@@ -558,7 +558,7 @@ describe('area units', () => {
   });
 
   it('warns on an implausible scale factor but still prices the row', () => {
-    // 60,000 sq ft against 120,000 acres — a factor near 2 in numbers but the
+    // 60,000 sq ft against 120,000 acres, a factor near 2 in numbers but the
     // units differ by 43,560, which shows up as an absurd scale factor.
     const r = runModel({ ...DEFAULT_DISCOVERY, targetArea: 60_000 * 43_560 });
     expect(r.status).toBe('ok');
@@ -668,7 +668,7 @@ describe('audit trail', () => {
 // ---------------------------------------------------------------------------
 
 describe('purity', () => {
-  it('is deterministic — the same input gives an identical result', () => {
+  it('is deterministic, the same input gives an identical result', () => {
     const a = JSON.stringify(runModel({ ...DEFAULT_DISCOVERY }));
     const b = JSON.stringify(runModel({ ...DEFAULT_DISCOVERY }));
     expect(a).toBe(b);

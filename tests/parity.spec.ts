@@ -16,7 +16,7 @@ import type { RawRow } from '../fixtures/portfolio.js';
  * Parity.
  *
  * The web path and the CLI path are run over the same fixture rows and asserted
- * to agree exactly — to the cent and to the whole dock. This is the guarantee
+ * to agree exactly, to the cent and to the whole dock. This is the guarantee
  * that the two delivery modes cannot drift.
  *
  * The web path here is the one the app actually uses (scorePortfolio). The CLI
@@ -148,7 +148,7 @@ describe('parity between the web path and the CLI path', () => {
   });
 
   for (let i = 0; i < FIXTURES.length; i++) {
-    const label = `${FIXTURES[i]!.Customer} — ${FIXTURES[i]!.Site}`;
+    const label = `${FIXTURES[i]!.Customer}, ${FIXTURES[i]!.Site}`;
 
     it(`row ${i + 1}: ${label} matches exactly`, () => {
       expect(flatten(web[i]!)).toEqual(flatten(cli[i]!));

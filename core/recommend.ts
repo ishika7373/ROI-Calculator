@@ -33,7 +33,7 @@ export function tierRank(tier: Tier): number {
  *   3. costRatio >= 1.0                           -> no standalone labour case
  *   4. otherwise                                  -> marginal
  *
- * Both conditions are required in tiers 1 and 2 — not either. A null payback means
+ * Both conditions are required in tiers 1 and 2, not either. A null payback means
  * the model does not save money, which implies a cost ratio at or above 1.0, so
  * such a row falls to tier 3 rather than qualifying on cost ratio alone.
  */

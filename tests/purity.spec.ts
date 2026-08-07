@@ -29,7 +29,7 @@ describe('/core is pure', () => {
     });
 
     it(`${file} touches no DOM, file IO or framework`, () => {
-      // Strip comments first — the rules are described in prose in several files.
+      // Strip comments first, the rules are described in prose in several files.
       const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
       for (const banned of [
         'document',

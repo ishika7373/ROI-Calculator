@@ -55,7 +55,7 @@ export function runModel(
 
   // The target scenario scales the customer's resources linearly and swaps in the
   // at-scale operator ratio. Nothing is averaged, smoothed or interpolated between
-  // the two — the contrast between linear manual cost and sub-linear autonomous
+  // the two, the contrast between linear manual cost and sub-linear autonomous
   // cost is the entire point of the second scenario.
   const scaleFactor = targetArea / area;
   const target = computeScenario({

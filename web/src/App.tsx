@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_PARAMS, runModel } from '../../core/index.js';
 import type { DiscoveryInputs, Params } from '../../core/index.js';
 import { scorePortfolio, totalsFor } from './scoring.js';
+import { PORTFOLIO } from '../../fixtures/portfolio.js';
+import type { RawRow } from '../../fixtures/portfolio.js';
 import { download, exceptionsCsv, portfolioCsv, scenarioCsv } from './exports.js';
 import {
   Audit,
   Comparison,
   Exceptions,
-  Headline,
+  ExecutiveSummary,
   ParamSources,
   Portfolio,
   Sensitivity,
@@ -83,8 +85,29 @@ const PARAM_FIELDS: {
   { key: 'implCost', label: 'One-time implementation' },
 ];
 
+/**
+ * Currencies offered in the picker.
+ *
+ * This labels figures, it does not convert them. The model is unit agnostic, so
+ * whatever the customer's costs are denominated in is what the outputs mean.
+ */
+const CURRENCIES = [
+  { code: 'USD', symbol: '$', name: 'US dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'Pound sterling' },
+  { code: 'INR', symbol: '₹', name: 'Indian rupee' },
+  { code: 'AED', symbol: 'د.إ', name: 'UAE dirham' },
+  { code: 'SAR', symbol: '﷼', name: 'Saudi riyal' },
+  { code: 'NOK', symbol: 'kr', name: 'Norwegian krone' },
+  { code: 'CAD', symbol: '$', name: 'Canadian dollar' },
+  { code: 'AUD', symbol: '$', name: 'Australian dollar' },
+  { code: 'SGD', symbol: '$', name: 'Singapore dollar' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese yen' },
+  { code: 'BRL', symbol: 'R$', name: 'Brazilian real' },
+] as const;
+
 const SECTIONS = [
-  { id: 'headline', n: '01', label: 'Headline' },
+  { id: 'summary', n: '01', label: 'Executive summary' },
   { id: 'comparison', n: '02', label: 'Cost comparison' },
   { id: 'audit', n: '03', label: 'Audit trail' },
   { id: 'sensitivity', n: '04', label: 'Sensitivity' },
@@ -137,16 +160,23 @@ function writeUrl(discovery: Discovery, params: Params) {
 /* --------------------------------------------------------------------- app */
 
 export default function App() {
-  const scored = useMemo(() => scorePortfolio(), []);
+  // The row set is state, not a constant, so an uploaded workbook genuinely
+  // replaces the portfolio rather than being read and discarded.
+  const [rows, setRows] = useState<RawRow[]>(PORTFOLIO);
+  const [sourceName, setSourceName] = useState<string>('Bundled sample portfolio');
+  const scored = useMemo(() => scorePortfolio(rows), [rows]);
   const [selectedSite, setSelectedSite] = useState(0);
   const [discovery, setDiscovery] = useState<Discovery>(EMPTY);
   const [params, setParams] = useState<Params>({ ...DEFAULT_PARAMS });
-  const [section, setSection] = useState<SectionId>('headline');
+  const [section, setSection] = useState<SectionId>('summary');
   const [documentView, setDocumentView] = useState(false);
   const [saved, setSaved] = useState<SavedScenario[]>([]);
   const [compare, setCompare] = useState<[string, string]>(['', '']);
   const [toast, setToast] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const initialised = useRef(false);
 
   // Load from the URL if present, otherwise from the first mock site.
@@ -185,16 +215,9 @@ export default function App() {
     const s = scored[index];
     if (!s) return;
     setSelectedSite(index);
-    const r = s.raw;
-    const str = (v: unknown) => (v === null || v === undefined ? '' : String(v));
-    setDiscovery({
-      area: str(r['Current Survey Area (sq ft)']),
-      resources: str(r['Manual Resources']),
-      salary: str(r['Salary per Resource ($/yr)']),
-      targetArea: str(r['Target Area (sq ft)']),
-      shiftHours: str(r['Shift Hours']),
-      workDays: str(r['Working Days']),
-    });
+    // Values come from the header matcher, not from hardcoded column names, so
+    // a workbook that spells its columns differently still loads correctly.
+    setDiscovery({ ...s.discovery });
     setParams({ ...s.params });
   }
 
@@ -218,7 +241,7 @@ export default function App() {
   /* ------------------------------------------------------------- exports */
 
   const siteLabel = scored[selectedSite]
-    ? `${scored[selectedSite]!.customer} — ${scored[selectedSite]!.site}`
+    ? `${scored[selectedSite]!.customer} / ${scored[selectedSite]!.site}`
     : 'Custom scenario';
 
   function exportScenarioCsv() {
@@ -264,7 +287,7 @@ export default function App() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } catch {
-      setToast('Could not save — browser storage unavailable');
+      setToast('Could not save. Browser storage is unavailable.');
     }
   }
 
@@ -280,24 +303,53 @@ export default function App() {
 
   /* ------------------------------------------------------------ dropzone */
 
+  /**
+   * Read an uploaded workbook and score it.
+   *
+   * The parsed rows replace the portfolio, so every section below reflects the
+   * uploaded file immediately. Nothing is read and thrown away.
+   */
   async function handleFile(file: File) {
-    setToast(`Reading ${file.name}…`);
+    if (!/\.xlsx$/i.test(file.name)) {
+      setUploadError(`${file.name} is not an .xlsx workbook. Export it from Excel and try again.`);
+      return;
+    }
+    setBusy(true);
+    setUploadError(null);
+    setToast(`Reading ${file.name}`);
     try {
       const { readWorkbookRows } = await import('./workbook-client.js');
-      const rows = await readWorkbookRows(await file.arrayBuffer());
-      setToast(`${rows} row(s) read — scoring uses the identical engine`);
+      const parsed = await readWorkbookRows(await file.arrayBuffer());
+      setRows(parsed);
+      setSourceName(file.name);
+      setSelectedSite(0);
+      setSection('portfolio');
+      setToast(`${parsed.length} row${parsed.length === 1 ? '' : 's'} scored from ${file.name}`);
     } catch (err) {
-      setToast(`Could not read that workbook: ${(err as Error).message}`);
+      setUploadError((err as Error).message);
+      setToast(null);
+    } finally {
+      setBusy(false);
+      if (fileInput.current) fileInput.current.value = '';
     }
+  }
+
+  /** Return to the bundled sample rows. */
+  function resetPortfolio() {
+    setRows(PORTFOLIO);
+    setSourceName('Bundled sample portfolio');
+    setSelectedSite(0);
+    setUploadError(null);
+    setToast('Reverted to the bundled sample portfolio');
   }
 
   /* --------------------------------------------------------------- view */
 
   const canvas = (
     <>
-      {(documentView || section === 'headline') && (
-        <div id="headline">
-          <Headline result={result} params={params} />
+      {(documentView || section === 'summary') && (
+        <div id="summary">
+          <ExecutiveSummary result={result} params={params} />
         </div>
       )}
       {(documentView || section === 'comparison') && (
@@ -373,7 +425,7 @@ export default function App() {
             >
               {scored.map((s) => (
                 <option key={s.index} value={s.index}>
-                  {s.customer} — {s.site}
+                  {s.customer} / {s.site}
                 </option>
               ))}
             </select>
@@ -444,7 +496,7 @@ export default function App() {
                     className="field"
                     inputMode="decimal"
                     value={discovery[key]}
-                    placeholder="—"
+                    placeholder=""
                     onChange={(e) => set(key, e.target.value)}
                   />
                 </div>
@@ -456,7 +508,7 @@ export default function App() {
               <div className="px-4 py-3 border-b border-steel/40">
                 <div className="eyebrow text-steel">Supplied by us</div>
                 <p className="text-[0.75rem] text-muted mt-1">
-                  Placeholders. Not commercial figures — replace before customer use.
+                  Placeholders, not commercial figures. Replace before customer use.
                 </p>
               </div>
               <div className="p-4 flex flex-col gap-3">
@@ -483,14 +535,21 @@ export default function App() {
                     Currency
                   </label>
                   <p className="question">
-                    The model is unit-agnostic; this only labels the figures.
+                    The model is unit agnostic. This labels the figures and does not
+                    convert them, so enter the customer's costs in the currency you pick.
                   </p>
-                  <input
+                  <select
                     id="currency"
                     className="field"
                     value={params.currency}
-                    onChange={(e) => setParams((p) => ({ ...p, currency: e.target.value.toUpperCase() }))}
-                  />
+                    onChange={(e) => setParams((p) => ({ ...p, currency: e.target.value }))}
+                  >
+                    {CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.code} ({c.symbol}) {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -538,12 +597,61 @@ export default function App() {
             </div>
 
             {/* batch upload */}
-            <div className="border border-dashed border-rule px-4 py-5 text-center">
-              <div className="eyebrow text-steel mb-1">Batch workbook</div>
-              <p className="text-[0.75rem] text-muted">
-                Drop an .xlsx anywhere on this page to score it with the identical engine, or use the
-                Workbook button to download the current portfolio.
-              </p>
+            <div className="flex flex-col gap-2">
+              <div className="eyebrow text-steel">Batch workbook</div>
+
+              <input
+                ref={fileInput}
+                type="file"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleFile(f);
+                }}
+              />
+
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => fileInput.current?.click()}
+                className={`w-full border border-dashed px-4 py-6 text-center transition-colors ${
+                  dragging
+                    ? 'border-steel bg-steel-tint'
+                    : uploadError
+                      ? 'border-amber bg-amber-tint'
+                      : 'border-rule bg-panel hover:bg-steel-tint/40'
+                } ${busy ? 'opacity-60' : ''}`}
+              >
+                <span className="block text-[0.875rem] font-medium">
+                  {busy ? 'Reading workbook' : 'Choose a workbook, or drop one here'}
+                </span>
+                <span className="block text-[0.75rem] text-muted mt-1">
+                  .xlsx, one row per site. Scored with the identical engine.
+                </span>
+              </button>
+
+              {uploadError && (
+                <div className="border border-amber bg-amber-tint px-3 py-2">
+                  <div className="eyebrow text-amber mb-1">Could not read that file</div>
+                  <p className="text-[0.75rem] whitespace-pre-wrap">{uploadError}</p>
+                </div>
+              )}
+
+              <div className="flex items-baseline justify-between gap-2 text-[0.75rem]">
+                <span className="text-muted">
+                  Source: <span className="text-ink font-medium">{sourceName}</span>{' '}
+                  ({scored.length} row{scored.length === 1 ? '' : 's'})
+                </span>
+                {sourceName !== 'Bundled sample portfolio' && (
+                  <button
+                    onClick={resetPortfolio}
+                    className="text-steel underline underline-offset-2 shrink-0"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </aside>
@@ -579,7 +687,7 @@ export default function App() {
         <p className="text-[0.75rem] text-muted max-w-[100ch] leading-relaxed">
           <span className="font-semibold text-ink">Scope of this model.</span> It prices labour
           displacement only. It excludes avoided scaffolding and rope access, avoided shutdown
-          windows, compliance penalty exposure and unplanned downtime — all of which are typically
+          windows, compliance penalty exposure and unplanned downtime, all of which are typically
           larger than the labour line at industrial scale. Autonomous-side defaults are placeholders
           requiring replacement with real commercial figures before customer use. The substitution
           factor is the key uncertainty; 1.0 is deliberately conservative because a docked drone does
@@ -622,9 +730,9 @@ function CompareTable({ a, b }: { a: SavedScenario; b: SavedScenario }) {
   const pct = (r: typeof ra) =>
     r.status === 'ok' ? `${(r.current.costRatio * 100).toFixed(1)}%` : 'incomplete';
   const money = (r: typeof ra, k: 'saving' | 'autoCost') =>
-    r.status === 'ok' ? r.current[k].toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
+    r.status === 'ok' ? r.current[k].toLocaleString('en-US', { maximumFractionDigits: 0 }) : '';
   const count = (r: typeof ra, k: 'docks' | 'operators') =>
-    r.status === 'ok' ? String(r.current[k]) : '—';
+    r.status === 'ok' ? String(r.current[k]) : '';
 
   return (
     <div className="border border-rule bg-panel overflow-x-auto">

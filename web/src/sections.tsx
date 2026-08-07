@@ -77,8 +77,8 @@ export function Incomplete({ result }: { result: ModelResult }) {
       <ul className="text-[0.875rem] flex flex-col gap-1 mt-1">
         {result.issues.map((issue, i) => (
           <li key={i} className="flex gap-2">
-            <span aria-hidden className="text-amber">
-              —
+            <span aria-hidden className="text-amber select-none">
+              &bull;
             </span>
             <span>{issue.reason}</span>
           </li>
@@ -102,12 +102,12 @@ function Warnings({ result }: { result: ModelResult }) {
   );
 }
 
-/* ---------------------------------------------------------------- headline */
+/* -------------------------------------------------------- executive summary */
 
-export function Headline({ result, params }: { result: ModelResult; params: Params }) {
+export function ExecutiveSummary({ result, params }: { result: ModelResult; params: Params }) {
   if (result.status !== 'ok') {
     return (
-      <Panel eyebrow="01" title="Headline">
+      <Panel eyebrow="01" title="Executive summary">
         <Incomplete result={result} />
       </Panel>
     );
@@ -115,15 +115,15 @@ export function Headline({ result, params }: { result: ModelResult; params: Para
 
   const c = result.current;
   const tierNote = result.tierImprovesAtTarget
-    ? 'Tier improves at the target area — the case strengthens as the site scales.'
+    ? 'Tier improves at the target area. The case strengthens as the site scales.'
     : result.tierWeakensAtTarget
-      ? 'Tier weakens at the target area — the case is stronger today than at scale.'
+      ? 'Tier weakens at the target area. The case is stronger today than at scale.'
       : null;
 
   return (
     <Panel
       eyebrow="01"
-      title="Headline"
+      title="Executive summary"
       note="Autonomous annual cost as a percentage of the manual annual cost, at the current area."
     >
       <Warnings result={result} />
@@ -171,7 +171,7 @@ export function Headline({ result, params }: { result: ModelResult; params: Para
           sub="Dock hours per year vs one manual resource"
           tone="steel"
         />
-        <Stat label="Docks required" value={formatCount(c.docks)} sub="Rounded up — a dock is a purchase" />
+        <Stat label="Docks required" value={formatCount(c.docks)} sub="Rounded up, because a dock is a purchase" />
         <Stat
           label="Operators required"
           value={formatCount(c.operators)}
@@ -447,7 +447,7 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
               return (
                 <tr key={s.ratio} className={isCurrent ? 'bg-steel-tint/50' : undefined}>
                   <td className="px-3 py-1.5 border-b border-rule font-medium">
-                    {s.ratio}:1{isCurrent && <span className="text-steel font-normal"> — current</span>}
+                    {s.ratio}:1{isCurrent && <span className="text-steel font-normal"> current</span>}
                   </td>
                   <td className="px-3 py-1.5 border-b border-rule text-right tnum">{s.docks}</td>
                   <td className="px-3 py-1.5 border-b border-rule text-right tnum">{s.operators}</td>
@@ -536,7 +536,7 @@ export function Portfolio({
             {scored.map((s) => {
               const okRow = s.result.status === 'ok';
               const c = okRow ? s.result.current : null;
-              const blank = <span className="text-muted">—</span>;
+              const blank = <span className="text-muted" aria-label="not priced"></span>;
               return (
                 <tr
                   key={s.index}

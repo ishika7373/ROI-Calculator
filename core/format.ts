@@ -23,13 +23,13 @@ export function formatCurrency(x: number | null, currency = 'USD', dp = 0): stri
   }).format(roundHalfUp(x, dp));
 }
 
-/** Percentages carry one decimal place — 22.8%, 20.5%. */
+/** Percentages carry one decimal place, 22.8%, 20.5%. */
 export function formatPercent(x: number | null, dp = 1): string {
   if (x === null || !Number.isFinite(x)) return INCOMPLETE;
   return `${roundHalfUp(x * 100, dp).toFixed(dp)}%`;
 }
 
-/** Return on spend carries no decimal place — 340%. */
+/** Return on spend carries no decimal place, 340%. */
 export function formatReturn(x: number | null): string {
   if (x === null || !Number.isFinite(x)) return INCOMPLETE;
   return `${roundHalfUp(x * 100, 0).toFixed(0)}%`;

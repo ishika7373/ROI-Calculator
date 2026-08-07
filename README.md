@@ -68,7 +68,7 @@ npm run batch -- --in path/to/input.xlsx --out Drone_ROI_Output.xlsx
 npm run build:single
 ```
 
-`build:single` produces `dist-single/index.html` — one self-contained file with inline JS
+`build:single` produces `dist-single/index.html`, one self-contained file with inline JS
 and CSS, no external requests, openable offline and emailable as an attachment.
 
 ---
@@ -92,7 +92,7 @@ hoursMultiple = hoursPerDock / (shiftHours × workDays)
 
 The target-area scenario scales resources linearly by `targetArea / area`, recomputes every
 line, and substitutes the at-scale operator ratio. Nothing is averaged, smoothed or
-interpolated between the two scenarios — the contrast between linear manual cost and
+interpolated between the two scenarios, the contrast between linear manual cost and
 sub-linear autonomous cost is the entire point of the second scenario.
 
 ### Rounding
@@ -105,7 +105,7 @@ operator ratio is applied to the whole dock count rather than a fractional one.
 
 Scaled resources at the target area are *not* rounded. They are a linear extrapolation of
 the customer's own staffing that nobody has committed to. Rounding 168.75 up to 169 would
-also inflate manual cost — which flatters the seller — and would turn manual cost into a
+also inflate manual cost, which flatters the seller, and would turn manual cost into a
 step function that obscures the very contrast the target scenario exists to show.
 
 ### Recommendation rule
@@ -119,7 +119,7 @@ Evaluated in order, on the current-area figures:
 | 3 | `costRatio ≥ 1.00` | Labour case does not stand alone at these inputs |
 | 4 | otherwise | Marginal on labour alone, requires additional value pools to justify |
 
-Both conditions are required in tiers 1 and 2 — not either. Invalid rows get no
+Both conditions are required in tiers 1 and 2, not either. Invalid rows get no
 recommendation at all. Where current and target fall into different tiers, the Status column
 says so rather than silently preferring one.
 
@@ -159,17 +159,17 @@ square footage went, that is the honest answer.
 
 166 tests across four suites.
 
-- **`core.spec.ts`** — every formula, every acceptance figure, and every edge case
+- **`core.spec.ts`**, every formula, every acceptance figure, and every edge case
   (zero, negative, empty, non-numeric, NaN, Infinity). Includes an exhaustive sweep
   asserting that no valid input combination produces a non-finite output.
-- **`purity.spec.ts`** — structural guarantees: nothing in `core/` imports outside itself,
+- **`purity.spec.ts`**, structural guarantees: nothing in `core/` imports outside itself,
   `calc.ts` contains no `Math.ceil`/`Math.round`/`toFixed`, and `round.ts` is the only file
   containing `Math.ceil`.
-- **`parity.spec.ts`** — twenty fixture rows through the web path and the CLI path,
+- **`parity.spec.ts`**, twenty fixture rows through the web path and the CLI path,
   asserted equal to the cent and to the whole dock. The CLI path is reconstructed from
   primitives rather than reusing the web helper, so the two are not the same code called
   twice.
-- **`workbook.spec.ts`** — reopens the generated workbook and asserts every sheet exists,
+- **`workbook.spec.ts`**, reopens the generated workbook and asserts every sheet exists,
   the charts are native chart XML bound to live cell ranges (not images), the ranges span
   every data row, no cell carries an error value, and two builds are byte-identical.
 
@@ -181,7 +181,7 @@ renders it `3.6` where the model requires `3.7`. Rounding therefore goes through
 epsilon-aware half-up helper, and both boundaries are asserted directly.
 
 The rule that the operator ratio must never be applied to a fractional dock count is
-provably inert for integer ratios — `ceil(ceil(x)/r) ≡ ceil(x/r)` whenever `r` is an
+provably inert for integer ratios, `ceil(ceil(x)/r) ≡ ceil(x/r)` whenever `r` is an
 integer. It only has teeth at fractional ratios, which are permitted because five and a half
 docks per operator is a real staffing plan. Both the proof and the fractional case are
 encoded as tests.
@@ -194,7 +194,7 @@ encoded as tests.
 Sensitivity Analysis, Charts, Exceptions (omitted when empty), README, and the original
 input worksheet preserved unmodified.
 
-Charts are **native, editable Excel charts** bound to cell ranges — not images. Editing a
+Charts are **native, editable Excel charts** bound to cell ranges, not images. Editing a
 figure on the Executive Summary moves the chart. Ranges are computed from the actual row
 count at build time, so adding a site cannot silently drop it from every chart.
 
@@ -206,8 +206,7 @@ libraries (ExcelJS, SheetJS CE, xlsx-populate) cannot emit chart XML at all.
 
 ## Known limitation
 
-The generated workbook has not been opened in Excel to confirm it triggers no repair prompt
-— that check requires macOS automation permission which was unavailable in the build
+The generated workbook has not been opened in Excel to confirm it triggers no repair prompt, that check requires macOS automation permission which was unavailable in the build
 environment. The package structure, content types, relationship wiring and chart bindings
 are all asserted programmatically, and the file round-trips through the library's own reader
 with charts intact. But the repair-prompt check itself remains unverified rather than passed.

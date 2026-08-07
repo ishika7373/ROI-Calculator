@@ -3,11 +3,11 @@
  *
  * Two rules live here and nowhere else:
  *
- *   `ceilCount` — anything we buy or hire rounds up. Docks are a purchase,
+ *   `ceilCount`, anything we buy or hire rounds up. Docks are a purchase,
  *   operators are a hire. Anything we extrapolate about the customer stays
  *   continuous, so scaled resources never pass through this function.
  *
- *   `roundHalfUp` — display only. `calc.ts` must never import from this module
+ *   `roundHalfUp`, display only. `calc.ts` must never import from this module
  *   for anything other than `ceilCount`; display rounding feeding back into
  *   arithmetic is how audit tables stop reconciling.
  */
@@ -15,7 +15,7 @@
 /**
  * Relative tolerance for the ceiling. Guards the case where a quotient that is
  * mathematically a whole number lands a few ulps above it in binary floating
- * point — without that guard, 3.0000000000000004 docks would be purchased as 4.
+ * point, without that guard, 3.0000000000000004 docks would be purchased as 4.
  *
  * Relative rather than absolute, so it stays meaningful across the whole range
  * of dock counts. True fractional parts in this model are many orders of
@@ -36,7 +36,7 @@ const HALF_UP_EPS = 1e-9;
 /**
  * Round up to a whole unit of something we procure.
  *
- * Returns 0 for non-positive input rather than a negative count — a negative
+ * Returns 0 for non-positive input rather than a negative count, a negative
  * dock count is not a thing, and validation rejects the inputs that would
  * produce one before this is ever reached.
  */
