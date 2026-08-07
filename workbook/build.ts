@@ -36,10 +36,12 @@ export function buildWorkbook(scored: ScoredSite[]) {
     'Industry',
     ...passthroughKeys,
     `Manual Cost (${currency})`,
+    `Addressable Manual Cost (${currency})`,
     `Autonomous Cost (${currency})`,
     `Annual Saving (${currency})`,
     'Cost Ratio (current area)',
     'Cost Ratio (target area)',
+    'Total Programme Cost Ratio',
     'Return %',
     'Payback Months',
     'Hours Multiple',
@@ -61,7 +63,12 @@ export function buildWorkbook(scored: ScoredSite[]) {
 
     if (s.result.status !== 'ok') {
       // Calculated fields genuinely blank. No zero, no "N/A", no recommendation.
-      execRows.push([...base, null, null, null, null, null, null, null, null, null, null, 'model incomplete', null]);
+      execRows.push([
+        ...base,
+        null, null, null, null, null, null, null, null, null, null, null, null,
+        'model incomplete',
+        null,
+      ]);
       continue;
     }
 
@@ -75,10 +82,12 @@ export function buildWorkbook(scored: ScoredSite[]) {
     execRows.push([
       ...base,
       c.manualCost,
+      c.addressableManualCost,
       c.autoCost,
       c.saving,
       c.costRatio,
       s.result.target.costRatio,
+      c.programmeCostRatio,
       c.returnPct,
       c.paybackMonths,
       c.hoursMultiple,
@@ -97,24 +106,28 @@ export function buildWorkbook(scored: ScoredSite[]) {
   const col = {
     customer: 1,
     manualCost: base + 1,
-    autoCost: base + 2,
-    saving: base + 3,
-    ratioCurrent: base + 4,
-    ratioTarget: base + 5,
-    returnPct: base + 6,
-    payback: base + 7,
-    hoursMultiple: base + 8,
-    docks: base + 9,
-    operators: base + 10,
+    addressableManualCost: base + 2,
+    autoCost: base + 3,
+    saving: base + 4,
+    ratioCurrent: base + 5,
+    ratioTarget: base + 6,
+    programmeRatio: base + 7,
+    returnPct: base + 8,
+    payback: base + 9,
+    hoursMultiple: base + 10,
+    docks: base + 11,
+    operators: base + 12,
   };
 
   const R = (c: number) => `${colLetter(c)}${firstData}:${colLetter(c)}${lastData}`;
 
   formatRange(wb, execWs, R(col.manualCost), FORMATS.currency0);
+  formatRange(wb, execWs, R(col.addressableManualCost), FORMATS.currency0);
   formatRange(wb, execWs, R(col.autoCost), FORMATS.currency0);
   formatRange(wb, execWs, R(col.saving), FORMATS.currency0);
   formatRange(wb, execWs, R(col.ratioCurrent), FORMATS.percent1);
   formatRange(wb, execWs, R(col.ratioTarget), FORMATS.percent1);
+  formatRange(wb, execWs, R(col.programmeRatio), FORMATS.percent1);
   formatRange(wb, execWs, R(col.returnPct), FORMATS.percent0);
   formatRange(wb, execWs, R(col.payback), FORMATS.months);
   formatRange(wb, execWs, R(col.hoursMultiple), FORMATS.multiple);
@@ -138,14 +151,23 @@ export function buildWorkbook(scored: ScoredSite[]) {
     'Manual hours',
     'Manual cost',
     'Hourly rate',
-    'Hours per dock',
+    'Hours per dock (availability)',
+    'Utilisation',
+    'Productive hours per dock',
+    'Addressable share',
+    'Addressable manual hours',
+    'Addressable manual cost',
+    'Non-addressable manual cost',
     'Docks before rounding',
     'Docks',
     'Operators before rounding',
     'Operators',
     'Autonomous cost',
     'Annual saving',
-    'Cost ratio',
+    'Cost ratio (addressable)',
+    'Total programme cost',
+    'Total programme cost ratio',
+    'Implementation for this fleet',
     'Return %',
     'Payback months',
     'Hours multiple',
@@ -155,7 +177,7 @@ export function buildWorkbook(scored: ScoredSite[]) {
 
   const pushScenario = (s: ScoredSite, which: 'current' | 'target') => {
     if (s.result.status !== 'ok') {
-      detailRows.push([s.customer, s.site, which, ...Array(18).fill(null)]);
+      detailRows.push([s.customer, s.site, which, ...Array(25).fill(null)]);
       return;
     }
     const m = which === 'current' ? s.result.current : s.result.target;
@@ -171,6 +193,12 @@ export function buildWorkbook(scored: ScoredSite[]) {
       m.manualCost,
       m.hourlyRate,
       m.hoursPerDock,
+      m.utilisationUsed,
+      m.productiveHoursPerDock,
+      m.addressableShare,
+      m.addressableHours,
+      m.addressableManualCost,
+      m.nonAddressableManualCost,
       m.docksExact,
       m.docks,
       m.operatorsExact,
@@ -178,6 +206,9 @@ export function buildWorkbook(scored: ScoredSite[]) {
       m.autoCost,
       m.saving,
       m.costRatio,
+      m.totalProgrammeCost,
+      m.programmeCostRatio,
+      m.implCost,
       m.returnPct,
       m.paybackMonths,
       m.hoursMultiple,
@@ -198,17 +229,26 @@ export function buildWorkbook(scored: ScoredSite[]) {
   });
 
   const dLast = detailRows.length;
-  formatRange(wb, detailWs, `D2:D${dLast}`, FORMATS.number0);
-  formatRange(wb, detailWs, `E2:E${dLast}`, FORMATS.number2);
-  formatRange(wb, detailWs, `G2:H${dLast}`, FORMATS.number2);
-  formatRange(wb, detailWs, `I2:I${dLast}`, FORMATS.currency0);
-  formatRange(wb, detailWs, `J2:J${dLast}`, FORMATS.currency2);
-  formatRange(wb, detailWs, `K2:K${dLast}`, FORMATS.number0);
-  formatRange(wb, detailWs, `L2:O${dLast}`, FORMATS.number2);
-  formatRange(wb, detailWs, `P2:Q${dLast}`, FORMATS.currency0);
-  formatRange(wb, detailWs, `R2:S${dLast}`, FORMATS.percent1);
-  formatRange(wb, detailWs, `T2:T${dLast}`, FORMATS.months);
-  formatRange(wb, detailWs, `U2:U${dLast}`, FORMATS.multiple);
+  formatRange(wb, detailWs, `D2:D${dLast}`, FORMATS.number0);   // area priced
+  formatRange(wb, detailWs, `E2:F${dLast}`, FORMATS.number2);   // scale factor, ratio
+  formatRange(wb, detailWs, `G2:H${dLast}`, FORMATS.number2);   // resources, hours
+  formatRange(wb, detailWs, `I2:I${dLast}`, FORMATS.currency0); // manual cost
+  formatRange(wb, detailWs, `J2:J${dLast}`, FORMATS.currency2); // hourly rate
+  formatRange(wb, detailWs, `K2:K${dLast}`, FORMATS.number0);   // hours per dock
+  formatRange(wb, detailWs, `L2:L${dLast}`, FORMATS.percent1);  // utilisation
+  formatRange(wb, detailWs, `M2:M${dLast}`, FORMATS.number0);   // productive hours
+  formatRange(wb, detailWs, `N2:N${dLast}`, FORMATS.percent1);  // addressable share
+  formatRange(wb, detailWs, `O2:O${dLast}`, FORMATS.number0);   // addressable hours
+  formatRange(wb, detailWs, `P2:Q${dLast}`, FORMATS.currency0); // addressable / non-addressable cost
+  formatRange(wb, detailWs, `R2:U${dLast}`, FORMATS.number2);   // dock and operator counts
+  formatRange(wb, detailWs, `V2:W${dLast}`, FORMATS.currency0); // autonomous cost, saving
+  formatRange(wb, detailWs, `X2:X${dLast}`, FORMATS.percent1);  // cost ratio
+  formatRange(wb, detailWs, `Y2:Y${dLast}`, FORMATS.currency0); // total programme cost
+  formatRange(wb, detailWs, `Z2:Z${dLast}`, FORMATS.percent1);  // programme ratio
+  formatRange(wb, detailWs, `AA2:AA${dLast}`, FORMATS.currency0); // implementation
+  formatRange(wb, detailWs, `AB2:AB${dLast}`, FORMATS.percent1);  // return
+  formatRange(wb, detailWs, `AC2:AC${dLast}`, FORMATS.months);
+  formatRange(wb, detailWs, `AD2:AD${dLast}`, FORMATS.multiple);
 
   /* -------------------------------------------------- Sheet 3: Audit Trail */
 
@@ -258,6 +298,29 @@ export function buildWorkbook(scored: ScoredSite[]) {
       sensRows.push([s.customer, s.site, row.ratio, row.docks, row.operators, row.autoCost, row.costRatio]);
     }
   }
+  // The two-dimensional grid follows the one-dimensional sweep on the same sheet.
+  // Utilisation and addressable share are the only two assumptions in this model
+  // that are neither a commercial figure nor a customer answer.
+  sensRows.push([]);
+  sensRows.push(['PAYBACK IN MONTHS, BY DOCK UTILISATION AND ADDRESSABLE SHARE']);
+  sensRows.push([
+    'Blank cells are sites where the model does not save money at that combination.',
+  ]);
+  for (const site of scored) {
+    if (site.result.status !== 'ok') continue;
+    const g = site.result.grid;
+    sensRows.push([]);
+    sensRows.push([`${site.customer}, ${site.site}`]);
+    sensRows.push(['Utilisation \\ addressable', ...g.addressableShares.map((a) => a)]);
+    g.cells.forEach((row, i) => {
+      sensRows.push([g.utilisations[i]!, ...row.map((c) => c.paybackMonths)]);
+    });
+    sensRows.push([
+      'Break-even utilisation at the current addressable share',
+      site.result.grid.breakEvenUtilisation,
+    ]);
+  }
+
   const sensWs = writeSheet(wb, { name: 'Sensitivity Analysis', rows: sensRows, freezeHeader: true });
   formatRange(wb, sensWs, `F2:F${sensRows.length}`, FORMATS.currency0);
   formatRange(wb, sensWs, `G2:G${sensRows.length}`, FORMATS.percent1);
@@ -401,18 +464,32 @@ function readmeRows(scored: ScoredSite[]): CellValue[][] {
   line('Exceptions, invalid or skipped rows with a specific reason each. Omitted when empty.');
   line('Original Input, the source worksheet, unmodified.');
 
+  head('Why the headline figures are not spectacular');
+  line('An earlier draft of this model produced a payback of half a month and a return of 340%. Those were alarm flags, not selling points, and three assumptions caused them.');
+  line('First, a dock was treated as productive for all 8,760 hours it can operate. Weather and daylight limits, the battery charge duty cycle, and maintenance and connectivity take most of those hours out. Utilisation is now an explicit parameter.');
+  line('Second, the entire manual inspection programme was treated as displaceable by a drone. Confined space entry, ultrasonic thickness measurement, tactile inspection, permits and reporting are not. Addressable share is now an explicit parameter and savings are measured only against the addressable scope.');
+  line('Third, implementation was a flat figure regardless of fleet size, which worked out at under 9,000 per dock for a 28-dock deployment. Implementation now has a programme base plus a per-dock cost.');
+  line('With those three corrected, a dock displaces roughly one full-time equivalent rather than three and a half, and returns a little under twice its own annual cost. Payback lands where a buyer would expect it to.');
+
   head('The model');
   line('manualHours   = resources x shiftHours x workDays');
   line('manualCost    = resources x salary');
   line('hourlyRate    = salary / (shiftHours x workDays)');
   line('hoursPerDock  = dockHours x dockDays');
-  line('docks         = roundUp( manualHours / (hoursPerDock x subFactor) )');
+  line('addressableHours     = manualHours x addressableShare');
+  line('addressableManualCost = manualCost x addressableShare');
+  line('productiveHours      = hoursPerDock x utilisation x subFactor');
+  line('docks         = roundUp( addressableHours / productiveHours )');
   line('operators     = roundUp( docks / docksPerOperator )');
   line('autoCost      = docks x dockCost + operators x opCost');
-  line('saving        = manualCost - autoCost');
-  line('costRatio     = autoCost / manualCost');
+  line('saving        = addressableManualCost - autoCost');
+  line('costRatio     = autoCost / addressableManualCost');
+  line('totalProgrammeCost = autoCost + nonAddressableManualCost');
+  line('implCost      = implBase + docks x implPerDock');
   line('returnPct     = saving / autoCost');
   line('paybackMonths = implCost / (saving / 12)');
+  line('');
+  line('Saving is measured against the addressable scope only. The customer keeps paying for the work a drone cannot do, so counting it as saved would be a fiction. Total programme cost shows what the whole inspection budget becomes.');
   line('hoursMultiple = hoursPerDock / (shiftHours x workDays)');
 
   head('Rounding, and why it differs by quantity');
@@ -450,7 +527,7 @@ function readmeRows(scored: ScoredSite[]): CellValue[][] {
     line(`dockHours = ${p.dockHours}   dockDays = ${p.dockDays}   subFactor = ${p.subFactor}`);
     line(`dockCost = ${p.dockCost}   opCost = ${p.opCost}`);
     line(`docksPerOperator now = ${p.ratioNow}   at scale = ${p.ratioScale}`);
-    line(`implementation = ${p.implCost}   currency = ${p.currency}`);
+    line(`implementation = ${p.implBase}   currency = ${p.currency}`);
   }
 
   head('The substitution factor is the key uncertainty');

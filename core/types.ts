@@ -41,7 +41,24 @@ export interface Params {
   dockHours: number;
   /** Dock operating days per year. */
   dockDays: number;
-  /** Substitution factor, drone hour : labour hour. The key uncertainty in the model. */
+  /**
+   * Fraction of a dock's operating hours that are actually productive.
+   *
+   * 24 x 365 is availability, not output. Weather and daylight limits, the
+   * battery charge duty cycle, maintenance and connectivity all take hours out.
+   * This is the parameter that stops the model claiming a dock never stops.
+   */
+  utilisation: number;
+  /**
+   * Fraction of the customer's manual inspection hours that autonomous aerial
+   * inspection can displace at all.
+   *
+   * Confined space entry, NDT thickness readings, tactile inspection, permit to
+   * work and reporting are not addressable by a drone. Assuming otherwise is the
+   * difference between a defensible case and a fantasy.
+   */
+  addressableShare: number;
+  /** Substitution factor, labour hours displaced per productive drone hour. */
   subFactor: number;
   /** Cost per dock per year. */
   dockCost: number;
@@ -51,8 +68,16 @@ export interface Params {
   ratioNow: number;
   /** Docks per operator at scale. May be fractional. */
   ratioScale: number;
-  /** One-time implementation cost. */
-  implCost: number;
+  /** One-time programme cost independent of fleet size: integration, security review, pilot. */
+  implBase: number;
+  /**
+   * One-time cost per dock deployed: site survey, civils, power and network,
+   * permits and regulatory approval, commissioning, training.
+   *
+   * Implementation that does not scale with the fleet is the single largest
+   * cause of an implausibly short payback.
+   */
+  implPerDock: number;
   /** ISO currency code used for labelling only. The model itself is unit-agnostic. */
   currency: string;
 }
@@ -83,7 +108,20 @@ export interface ScenarioMetrics {
   manualHours: number;
   manualCost: number;
   hourlyRate: number;
+  /** Theoretical dock availability, dockHours x dockDays. */
   hoursPerDock: number;
+  /** Availability after utilisation and substitution, the hours that actually count. */
+  productiveHoursPerDock: number;
+
+  /** Share of manual hours a drone can address, echoed for the audit trail. */
+  addressableShare: number;
+  utilisationUsed: number;
+  /** Manual hours within reach of autonomous inspection. */
+  addressableHours: number;
+  /** Cost of the addressable portion of the manual programme. */
+  addressableManualCost: number;
+  /** Cost of the manual work a drone cannot do, which the customer keeps paying. */
+  nonAddressableManualCost: number;
 
   /** Docks before rounding up. Carried for the audit trail so the ceiling is visible. */
   docksExact: number;
@@ -95,8 +133,22 @@ export interface ScenarioMetrics {
   operators: number;
 
   autoCost: number;
+  /**
+   * Addressable manual cost less autonomous cost.
+   *
+   * Deliberately NOT total manual cost less autonomous cost: the customer keeps
+   * paying for the work a drone cannot do, and pretending otherwise is exactly
+   * the error that produces a saving in the millions and a payback in weeks.
+   */
   saving: number;
+  /** Autonomous cost as a share of the addressable manual cost. */
   costRatio: number;
+  /** Total inspection programme cost once autonomous is in place. */
+  totalProgrammeCost: number;
+  /** Total programme cost after, as a share of total manual cost before. */
+  programmeCostRatio: number;
+  /** Implementation for this scenario: base plus per-dock, so it scales with the fleet. */
+  implCost: number;
   /** `null` only when autoCost is zero. Negative is a valid, meaningful answer. */
   returnPct: number | null;
   /** `null` when saving is zero or negative, there is no payback to report. */
@@ -108,6 +160,8 @@ export interface ScenarioMetrics {
   autoCostPerArea: number;
   savingPerArea: number;
 }
+
+import type { SensitivityGrid } from './sensitivity.js';
 
 /** One row of the docks-per-operator sensitivity sweep. */
 export interface SensitivityRow {
@@ -174,6 +228,8 @@ export interface ModelOk {
   current: ScenarioMetrics;
   target: ScenarioMetrics;
   sensitivity: SensitivityRow[];
+  /** Two-dimensional sweep over the model's only genuinely uncertain assumptions. */
+  grid: SensitivityGrid;
   /** Tier for the current-area scenario. Sheet 1 and the recommendation use this. */
   tierCurrent: Tier;
   tierTarget: Tier;
@@ -194,6 +250,7 @@ export interface ModelIncomplete {
   current: null;
   target: null;
   sensitivity: [];
+  grid: null;
   tierCurrent: null;
   tierTarget: null;
   tierImprovesAtTarget: false;

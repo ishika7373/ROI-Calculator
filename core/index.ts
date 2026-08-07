@@ -3,7 +3,7 @@ import { DEFAULT_PARAMS } from './defaults.js';
 import { computeScenario } from './calc.js';
 import { buildAudit } from './audit.js';
 import { recommendationFor, tierFor, tierRank } from './recommend.js';
-import { sensitivity } from './sensitivity.js';
+import { sensitivity, sensitivityGrid } from './sensitivity.js';
 import { validateDiscovery, validateParams } from './validate.js';
 
 /**
@@ -26,6 +26,7 @@ export function runModel(
       current: null,
       target: null,
       sensitivity: [],
+      grid: null,
       tierCurrent: null,
       tierTarget: null,
       tierImprovesAtTarget: false,
@@ -80,6 +81,7 @@ export function runModel(
     // Reported for the current-area scenario, which is the basis Sheet 1 and the
     // recommendation use.
     sensitivity: sensitivity(current, params),
+    grid: sensitivityGrid(current, params),
     tierCurrent,
     tierTarget,
     tierImprovesAtTarget: tierRank(tierTarget) > tierRank(tierCurrent),
@@ -93,9 +95,20 @@ export function runModel(
   };
 }
 
-export { DEFAULT_PARAMS, DEFAULT_DISCOVERY, SENSITIVITY_RATIOS, DEFAULT_AREA_UNIT } from './defaults.js';
+export {
+  DEFAULT_PARAMS,
+  DEFAULT_DISCOVERY,
+  UNCALIBRATED_PARAMS,
+  UNCALIBRATED_DISCOVERY,
+  SENSITIVITY_RATIOS,
+  SENSITIVITY_UTILISATION,
+  SENSITIVITY_ADDRESSABLE,
+  PAYBACK_BANDS,
+  DEFAULT_AREA_UNIT,
+} from './defaults.js';
 export { computeScenario } from './calc.js';
-export { sensitivity } from './sensitivity.js';
+export { sensitivity, sensitivityGrid } from './sensitivity.js';
+export type { SensitivityGrid, GridCell } from './sensitivity.js';
 export { tierFor, tierRank, recommendationFor, TIER_TEXT } from './recommend.js';
 export { buildAudit } from './audit.js';
 export {

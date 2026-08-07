@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_DISCOVERY,
   DEFAULT_PARAMS,
+  UNCALIBRATED_DISCOVERY,
+  UNCALIBRATED_PARAMS,
   ceilCount,
   computeScenario,
   coerceNumber,
@@ -27,12 +29,24 @@ function ok(result: ReturnType<typeof runModel>): ModelOk {
 
 const defaults = () => runModel({ ...DEFAULT_DISCOVERY });
 
+/**
+ * The model as originally published, before calibration against real deployment
+ * economics.
+ *
+ * Utilisation and addressable share at 1.0, and a flat implementation cost,
+ * collapse the model to its original form. The published acceptance figures are
+ * asserted against this so the arithmetic stays provable independently of the
+ * calibration. These inputs do not describe a real deployment: they imply a dock
+ * that never stops and a manual programme entirely displaceable by a drone.
+ */
+const uncalibrated = () => runModel({ ...UNCALIBRATED_DISCOVERY }, UNCALIBRATED_PARAMS);
+
 // ---------------------------------------------------------------------------
 // 1. Acceptance: defaults, current area
 // ---------------------------------------------------------------------------
 
-describe('acceptance, defaults, current area', () => {
-  const r = () => ok(defaults()).current;
+describe('acceptance, original published figures, current area', () => {
+  const r = () => ok(uncalibrated()).current;
 
   it('manualHours = 240,000', () => expect(r().manualHours).toBe(240_000));
   it('manualCost = $8,000,000', () => expect(r().manualCost).toBe(8_000_000));
@@ -75,8 +89,8 @@ describe('acceptance, defaults, current area', () => {
 // 2. Acceptance: defaults, target area
 // ---------------------------------------------------------------------------
 
-describe('acceptance, defaults, target area', () => {
-  const r = () => ok(defaults()).target;
+describe('acceptance, original published figures, target area', () => {
+  const r = () => ok(uncalibrated()).target;
 
   it('manualCost = $16,000,000', () => expect(r().manualCost).toBe(16_000_000));
   it('docks = 55', () => expect(r().docks).toBe(55));
@@ -92,7 +106,9 @@ describe('acceptance, defaults, target area', () => {
 // ---------------------------------------------------------------------------
 
 describe('acceptance, sensitivity at current area', () => {
-  const rows = () => ok(defaults()).sensitivity;
+  // The shipped sweep is 3/5/7/9; the published figures were quoted at 2/4/6/8,
+  // so that set is passed explicitly rather than relying on the default.
+  const rows = () => sensitivity(ok(uncalibrated()).current, UNCALIBRATED_PARAMS, [2, 4, 6, 8]);
 
   it('6:1 gives autoCost $1,660,000', () => {
     const row = rows().find((s) => s.ratio === 6)!;
@@ -111,7 +127,7 @@ describe('acceptance, sensitivity at current area', () => {
 
   it('the 4:1 row reconciles with the headline autoCost', () => {
     const row = rows().find((s) => s.ratio === 4)!;
-    expect(row.autoCost).toBe(ok(defaults()).current.autoCost);
+    expect(row.autoCost).toBe(ok(uncalibrated()).current.autoCost);
   });
 });
 
@@ -123,7 +139,7 @@ describe('RULE: ceiling is non-commutative with linear scaling', () => {
   // Scaling resources then ceiling gives 55 docks. Ceiling then scaling gives 56.
   // This is the test that catches scaling the wrong quantity.
   it('target docks are 55, not 2 x 28 = 56', () => {
-    const t = ok(defaults()).target;
+    const t = ok(uncalibrated()).target;
     expect(t.docks).toBe(55);
     expect(t.docks).not.toBe(56);
     expect(t.docksExact).toBeCloseTo(480_000 / 8_760, 10);
@@ -132,15 +148,15 @@ describe('RULE: ceiling is non-commutative with linear scaling', () => {
 
 describe('RULE: the target scenario substitutes ratioScale for ratioNow', () => {
   it('target operators are 10 (55/6), not 14 (55/4)', () => {
-    const r = ok(defaults());
-    expect(r.target.ratioUsed).toBe(DEFAULT_PARAMS.ratioScale);
+    const r = ok(uncalibrated());
+    expect(r.target.ratioUsed).toBe(UNCALIBRATED_PARAMS.ratioScale);
     expect(r.target.operators).toBe(10);
     expect(r.target.operators).not.toBe(14);
   });
 
   it('the current scenario still uses ratioNow, no cross-contamination', () => {
-    const r = ok(defaults());
-    expect(r.current.ratioUsed).toBe(DEFAULT_PARAMS.ratioNow);
+    const r = ok(uncalibrated());
+    expect(r.current.ratioUsed).toBe(UNCALIBRATED_PARAMS.ratioNow);
     expect(r.current.operators).toBe(7);
   });
 });
@@ -179,11 +195,13 @@ describe('RULE: anything we buy or hire rounds up; extrapolations stay continuou
     expect(r.target.resources).not.toBe(169);
     expect(r.target.manualHours).toBeCloseTo(168.75 * 8 * 310, 8);
     expect(r.target.manualCost).toBeCloseTo(168.75 * 82_000, 8);
-    // Docks derive from the fractional hours, then round up.
-    expect(r.target.docksExact).toBeCloseTo(
-      (168.75 * 8 * 310) / (8_760 * 1.0),
-      10,
-    );
+    // Docks derive from the fractional hours, then round up. The addressable
+    // share and utilisation are read from the params rather than hardcoded, so
+    // recalibrating the defaults cannot silently invalidate this assertion.
+    const p = r.params;
+    const addressableHours = 168.75 * 8 * 310 * p.addressableShare;
+    const productive = p.dockHours * p.dockDays * p.utilisation * p.subFactor;
+    expect(r.target.docksExact).toBeCloseTo(addressableHours / productive, 10);
   });
 });
 
@@ -202,8 +220,8 @@ describe('RULE: the operator ratio is applied to whole docks', () => {
   });
 
   it('bites at fractional ratios, 5.5 docks per operator', () => {
-    const params: Params = { ...DEFAULT_PARAMS, ratioNow: 5.5 };
-    const r = ok(runModel({ ...DEFAULT_DISCOVERY }, params));
+    const params: Params = { ...UNCALIBRATED_PARAMS, ratioNow: 5.5 };
+    const r = ok(runModel({ ...UNCALIBRATED_DISCOVERY }, params));
     // 28 whole docks / 5.5 = 5.09 -> 6 operators.
     expect(r.current.operators).toBe(6);
     // The fractional-dock path would give ceil(27.397/5.5) = ceil(4.98) = 5.
@@ -212,8 +230,8 @@ describe('RULE: the operator ratio is applied to whole docks', () => {
   });
 
   it('accepts a fractional ratio as a real staffing plan', () => {
-    const params: Params = { ...DEFAULT_PARAMS, ratioNow: 2.5 };
-    const r = ok(runModel({ ...DEFAULT_DISCOVERY }, params));
+    const params: Params = { ...UNCALIBRATED_PARAMS, ratioNow: 2.5 };
+    const r = ok(runModel({ ...UNCALIBRATED_DISCOVERY }, params));
     expect(r.current.operatorsExact).toBeCloseTo(28 / 2.5, 10);
     expect(r.current.operators).toBe(12); // 11.2 -> 12
   });
@@ -221,7 +239,7 @@ describe('RULE: the operator ratio is applied to whole docks', () => {
 
 describe('RULE: substitution factor moves docks in the stated direction', () => {
   const docksAt = (subFactor: number) =>
-    ok(runModel({ ...DEFAULT_DISCOVERY }, { ...DEFAULT_PARAMS, subFactor })).current.docks;
+    ok(runModel({ ...UNCALIBRATED_DISCOVERY }, { ...UNCALIBRATED_PARAMS, subFactor })).current.docks;
 
   it('a higher substitution factor reduces docks', () => {
     expect(docksAt(0.5)).toBe(55);
@@ -245,16 +263,18 @@ describe('RULE: substitution factor moves docks in the stated direction', () => 
 
 describe('RULE: operator cost is distinct from resource salary', () => {
   it('changing opCost alone moves autoCost', () => {
-    const base = ok(defaults()).current.autoCost;
+    const base = ok(uncalibrated()).current.autoCost;
     const bumped = ok(
-      runModel({ ...DEFAULT_DISCOVERY }, { ...DEFAULT_PARAMS, opCost: 90_000 }),
+      runModel({ ...UNCALIBRATED_DISCOVERY }, { ...UNCALIBRATED_PARAMS, opCost: 90_000 }),
     ).current.autoCost;
     expect(bumped - base).toBe(7 * 10_000);
   });
 
   it('changing salary alone does not move autoCost', () => {
-    const base = ok(defaults()).current.autoCost;
-    const other = ok(runModel({ ...DEFAULT_DISCOVERY, salary: 95_000 })).current.autoCost;
+    const base = ok(uncalibrated()).current.autoCost;
+    const other = ok(
+      runModel({ ...UNCALIBRATED_DISCOVERY, salary: 95_000 }, UNCALIBRATED_PARAMS),
+    ).current.autoCost;
     expect(other).toBe(base);
   });
 });
@@ -485,9 +505,9 @@ describe('negative saving is a real answer, not a failure', () => {
 // ---------------------------------------------------------------------------
 
 describe('recommendation tiers', () => {
-  it('defaults land in the strong tier', () => {
-    expect(ok(defaults()).tierCurrent).toBe('strong');
-    expect(ok(defaults()).recommendation).toBe('Strong case, proceed to scoped study');
+  it('the original published figures land in the strong tier', () => {
+    expect(ok(uncalibrated()).tierCurrent).toBe('strong');
+    expect(ok(uncalibrated()).recommendation).toBe('Strong case, proceed to scoped study');
   });
 
   it('requires BOTH conditions in tier 1, not either', () => {
@@ -609,14 +629,14 @@ describe('coercion', () => {
 
 describe('audit trail', () => {
   it('carries a scale factor line so the customer sees what their area became', () => {
-    const line = ok(defaults()).audit.find((l) => l.key === 'scaleFactor')!;
+    const line = ok(uncalibrated()).audit.find((l) => l.key === 'scaleFactor')!;
     expect(line.current).toBe(1);
     expect(line.target).toBe(2);
     expect(line.targetWorking).toContain('120,000 ÷ 60,000');
   });
 
   it('shows the ceiling as its own step for docks and operators', () => {
-    const audit = ok(defaults()).audit;
+    const audit = ok(uncalibrated()).audit;
     expect(audit.find((l) => l.key === 'docksExact')!.current).toBeCloseTo(27.3972, 3);
     expect(audit.find((l) => l.key === 'docks')!.current).toBe(28);
     expect(audit.find((l) => l.key === 'operatorsExact')!.current).toBe(7);
@@ -624,7 +644,7 @@ describe('audit trail', () => {
   });
 
   it('reconciles: every line recomputes from the lines above it', () => {
-    const a = Object.fromEntries(ok(defaults()).audit.map((l) => [l.key, l.current!]));
+    const a = Object.fromEntries(ok(uncalibrated()).audit.map((l) => [l.key, l.current!]));
     expect(a.manualHours).toBe(a.resources! * 8 * 300);
     expect(a.hoursPerDock).toBe(24 * 365);
     expect(a.hourlyRate).toBeCloseTo(80_000 / (8 * 300), 10);
@@ -640,7 +660,7 @@ describe('audit trail', () => {
   });
 
   it('carries the cost-per-area display lines', () => {
-    const a = ok(defaults()).audit;
+    const a = ok(uncalibrated()).audit;
     expect(a.find((l) => l.key === 'manualCostPerArea')!.current).toBeCloseTo(8_000_000 / 60_000, 8);
     expect(a.find((l) => l.key === 'autoCostPerArea')!.target).toBeCloseTo(3_275_000 / 120_000, 8);
   });
@@ -693,14 +713,149 @@ describe('purity', () => {
       workDays: 300,
       areaUsed: 60_000,
       scaleFactor: 1,
-      ratio: 4,
-      params: DEFAULT_PARAMS,
+      ratio: UNCALIBRATED_PARAMS.ratioNow,
+      params: UNCALIBRATED_PARAMS,
     });
-    expect(direct).toEqual(ok(defaults()).current);
+    expect(direct).toEqual(ok(uncalibrated()).current);
   });
 
   it('sensitivity is callable standalone and agrees with runModel', () => {
     const r = ok(defaults());
-    expect(sensitivity(r.current, DEFAULT_PARAMS)).toEqual(r.sensitivity);
+    expect(sensitivity(r.current, r.params)).toEqual(r.sensitivity);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 14. Plausibility of the calibrated defaults
+//
+// The original figures produced a payback of half a month and a return of 340%.
+// Those are alarm flags, not selling points: they came from treating 8,760
+// operating hours as productive, treating the entire manual programme as
+// displaceable, and holding implementation flat regardless of fleet size.
+//
+// These tests lock the corrected economics so the model cannot drift back.
+// ---------------------------------------------------------------------------
+
+describe('the calibrated defaults are plausible', () => {
+  const c = () => ok(defaults()).current;
+
+  it('one dock does not displace three and a half people', () => {
+    const m = c();
+    const ftesPerDock = m.productiveHoursPerDock / (m.shiftHoursUsed * m.workDaysUsed);
+    expect(ftesPerDock).toBeGreaterThan(0.5);
+    expect(ftesPerDock).toBeLessThan(2.0);
+  });
+
+  it('a dock returns a credible multiple of its own cost, not four times over', () => {
+    const m = c();
+    const p = DEFAULT_PARAMS;
+    const ftesPerDock = m.productiveHoursPerDock / (m.shiftHoursUsed * m.workDaysUsed);
+    const labourValue = ftesPerDock * m.salaryUsed;
+    const dockAnnual = p.dockCost + p.opCost / p.ratioNow;
+    expect(labourValue / dockAnnual).toBeGreaterThan(1.2);
+    expect(labourValue / dockAnnual).toBeLessThan(2.5);
+  });
+
+  it('payback lands in the 18 to 24 month band a buyer would believe', () => {
+    const payback = c().paybackMonths;
+    expect(payback).not.toBeNull();
+    expect(payback!).toBeGreaterThanOrEqual(12);
+    expect(payback!).toBeLessThanOrEqual(30);
+  });
+
+  it('implementation scales with the fleet rather than sitting flat', () => {
+    const small = ok(runModel({ ...DEFAULT_DISCOVERY, resources: 10 })).current;
+    const large = ok(runModel({ ...DEFAULT_DISCOVERY, resources: 100 })).current;
+    expect(large.docks).toBeGreaterThan(small.docks);
+    expect(large.implCost).toBeGreaterThan(small.implCost);
+    // Per-dock implementation stays within a sane band at both ends.
+    for (const m of [small, large]) {
+      const perDock = m.implCost / m.docks;
+      expect(perDock).toBeGreaterThan(50_000);
+      expect(perDock).toBeLessThan(400_000);
+    }
+  });
+
+  it('saving is measured against the addressable scope, not the whole programme', () => {
+    const m = c();
+    expect(m.saving).toBeCloseTo(m.addressableManualCost - m.autoCost, 6);
+    expect(m.saving).toBeLessThan(m.manualCost - m.autoCost);
+    expect(m.addressableManualCost).toBeLessThan(m.manualCost);
+  });
+
+  it('the customer keeps paying for work a drone cannot do', () => {
+    const m = c();
+    expect(m.nonAddressableManualCost).toBeGreaterThan(0);
+    expect(m.totalProgrammeCost).toBe(m.autoCost + m.nonAddressableManualCost);
+    // Total programme cost falls, but by a share a CFO would recognise.
+    expect(m.programmeCostRatio).toBeGreaterThan(0.6);
+    expect(m.programmeCostRatio).toBeLessThan(1.0);
+  });
+
+  it('utilisation and addressable share are bounded as fractions', () => {
+    for (const bad of [0, -0.1, 1.5]) {
+      expect(runModel({ ...DEFAULT_DISCOVERY }, { ...DEFAULT_PARAMS, utilisation: bad }).status).toBe(
+        'model incomplete',
+      );
+      expect(
+        runModel({ ...DEFAULT_DISCOVERY }, { ...DEFAULT_PARAMS, addressableShare: bad }).status,
+      ).toBe('model incomplete');
+    }
+    expect(runModel({ ...DEFAULT_DISCOVERY }, { ...DEFAULT_PARAMS, utilisation: 1 }).status).toBe('ok');
+  });
+
+  it('a low labour-rate market does not clear the bar on labour alone', () => {
+    // Autonomous costs roughly $33 per displaced labour hour. Where labour costs
+    // less than that, the case genuinely does not stand on displacement alone,
+    // and the model must say so rather than manufacture a saving.
+    const cheap = runModel({ ...DEFAULT_DISCOVERY, salary: 45_000, workDays: 260, shiftHours: 12 });
+    expect(cheap.status).toBe('ok');
+    const m = ok(cheap).current;
+    expect(m.saving).toBeLessThan(0);
+    expect(m.paybackMonths).toBeNull();
+    expect(ok(cheap).tierCurrent).toBe('no-standalone');
+  });
+});
+
+describe('the sensitivity grid', () => {
+  it('recomputes the model in every cell rather than interpolating', () => {
+    const r = ok(defaults());
+    const grid = r.grid;
+    expect(grid.cells.length).toBe(grid.utilisations.length);
+    for (const row of grid.cells) expect(row.length).toBe(grid.addressableShares.length);
+
+    // The cell matching the live scenario must reproduce the headline exactly.
+    const here = grid.cells.flat().find((c) => c.isCurrent);
+    expect(here, 'the live scenario should appear in the grid').toBeDefined();
+    expect(here!.docks).toBe(r.current.docks);
+    expect(here!.autoCost).toBe(r.current.autoCost);
+    expect(here!.paybackMonths).toBeCloseTo(r.current.paybackMonths!, 6);
+  });
+
+  it('payback improves monotonically as utilisation rises', () => {
+    const grid = ok(defaults()).grid;
+    const col = grid.addressableShares.indexOf(0.35);
+    const paybacks = grid.cells.map((row) => row[col]!.paybackMonths);
+    const finite = paybacks.filter((p): p is number => p !== null);
+    for (let i = 1; i < finite.length; i++) {
+      expect(finite[i]!).toBeLessThanOrEqual(finite[i - 1]!);
+    }
+  });
+
+  it('reports the utilisation at which the case stops clearing the horizon', () => {
+    const grid = ok(defaults()).grid;
+    expect(grid.horizonMonths).toBe(24);
+    expect(grid.breakEvenUtilisation).not.toBeNull();
+    expect(grid.breakEvenUtilisation!).toBeGreaterThan(0);
+    expect(grid.breakEvenUtilisation!).toBeLessThanOrEqual(DEFAULT_PARAMS.utilisation);
+  });
+
+  it('carries no NaN or Infinity in any cell', () => {
+    for (const cell of ok(defaults()).grid.cells.flat()) {
+      expect(Number.isFinite(cell.autoCost)).toBe(true);
+      expect(Number.isFinite(cell.costRatio)).toBe(true);
+      expect(Number.isFinite(cell.saving)).toBe(true);
+      if (cell.paybackMonths !== null) expect(Number.isFinite(cell.paybackMonths)).toBe(true);
+    }
   });
 });

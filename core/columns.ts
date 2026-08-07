@@ -52,7 +52,10 @@ const PARAM_ALIASES: Record<keyof Params, string[]> = {
   opCost: ['costperoperatorperyr', 'costperoperator', 'operatorcost'],
   ratioNow: ['docksperoperatornow', 'docksperoperator', 'rationow'],
   ratioScale: ['docksperoperatoratscale', 'ratioatscale', 'ratioscale'],
-  implCost: ['implementationcost', 'onetimeimplementation', 'implcost'],
+  implBase: ['implementationcost', 'onetimeimplementation', 'implcost', 'implementationbase', 'programmebase'],
+  implPerDock: ['implementationperdock', 'implperdock', 'deploymentcostperdock'],
+  utilisation: ['dockutilisation', 'dockutilization', 'utilisation', 'utilization'],
+  addressableShare: ['addressableshare', 'addressable', 'addressablesharemanualhours', 'displaceableshare'],
   currency: ['currency', 'currencycode'],
 };
 

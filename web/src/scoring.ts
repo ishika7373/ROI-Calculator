@@ -103,9 +103,18 @@ export interface PortfolioTotals {
   priced: number;
   incomplete: number;
   manualCost: number;
+  /** Total manual cost within reach of aerial inspection. */
+  addressableManualCost: number;
   autoCost: number;
   saving: number;
+  /**
+   * Autonomous cost over addressable manual cost, the same basis as the
+   * per-site ratio. Dividing by total manual cost instead would produce a
+   * blended figure that no row on the table agrees with.
+   */
   costRatio: number | null;
+  /** Total programme cost after, over total manual cost before. */
+  programmeCostRatio: number | null;
   docks: number;
   operators: number;
 }
@@ -113,6 +122,8 @@ export interface PortfolioTotals {
 /** Aggregate only over rows that actually priced. Incomplete rows are counted, never guessed. */
 export function totalsFor(scored: ScoredSite[], scenario: 'current' | 'target'): PortfolioTotals {
   let manualCost = 0;
+  let addressableManualCost = 0;
+  let totalProgrammeCost = 0;
   let autoCost = 0;
   let docks = 0;
   let operators = 0;
@@ -122,6 +133,8 @@ export function totalsFor(scored: ScoredSite[], scenario: 'current' | 'target'):
     if (s.result.status !== 'ok') continue;
     const m = scenario === 'current' ? s.result.current : s.result.target;
     manualCost += m.manualCost;
+    addressableManualCost += m.addressableManualCost;
+    totalProgrammeCost += m.totalProgrammeCost;
     autoCost += m.autoCost;
     docks += m.docks;
     operators += m.operators;
@@ -133,9 +146,11 @@ export function totalsFor(scored: ScoredSite[], scenario: 'current' | 'target'):
     priced,
     incomplete: scored.length - priced,
     manualCost,
+    addressableManualCost,
     autoCost,
-    saving: manualCost - autoCost,
-    costRatio: manualCost > 0 ? autoCost / manualCost : null,
+    saving: addressableManualCost - autoCost,
+    costRatio: addressableManualCost > 0 ? autoCost / addressableManualCost : null,
+    programmeCostRatio: manualCost > 0 ? totalProgrammeCost / manualCost : null,
     docks,
     operators,
   };

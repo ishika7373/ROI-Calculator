@@ -107,12 +107,61 @@ export function buildAudit(
       (m) => m.hoursPerDock,
     ),
     line(
+      'utilisation',
+      'Dock utilisation',
+      'share of operating hours that are actually productive, after weather, daylight, charge cycles and maintenance',
+      'percent',
+      (m) => `${n(m.utilisationUsed * 100)}% of ${n(m.hoursPerDock)} operating hours`,
+      (m) => m.utilisationUsed,
+    ),
+    line(
+      'productiveHoursPerDock',
+      'Productive hours per dock per year',
+      'hours per dock × utilisation × substitution factor',
+      'hours',
+      (m) =>
+        `${n(m.hoursPerDock)} × ${n(m.utilisationUsed)} × ${n(params.subFactor)} = ${n(m.productiveHoursPerDock)}`,
+      (m) => m.productiveHoursPerDock,
+    ),
+    line(
+      'addressableShare',
+      'Addressable share of manual work',
+      'share of manual inspection hours that aerial inspection can displace at all',
+      'percent',
+      (m) =>
+        `${n(m.addressableShare * 100)}% (the remainder is confined space, thickness readings, tactile work, permits and reporting)`,
+      (m) => m.addressableShare,
+    ),
+    line(
+      'addressableHours',
+      'Addressable manual hours',
+      'manual hours × addressable share',
+      'hours',
+      (m) => `${n(m.manualHours)} × ${n(m.addressableShare)} = ${n(m.addressableHours)}`,
+      (m) => m.addressableHours,
+    ),
+    line(
+      'addressableManualCost',
+      'Addressable manual cost',
+      'manual cost × addressable share, the only part autonomous inspection can save',
+      'currency',
+      (m) => `${n(m.manualCost)} × ${n(m.addressableShare)} = ${n(m.addressableManualCost)}`,
+      (m) => m.addressableManualCost,
+    ),
+    line(
+      'nonAddressableManualCost',
+      'Non-addressable manual cost',
+      'manual cost − addressable manual cost, which the customer keeps paying',
+      'currency',
+      (m) => `${n(m.manualCost)} − ${n(m.addressableManualCost)} = ${n(m.nonAddressableManualCost)}`,
+      (m) => m.nonAddressableManualCost,
+    ),
+    line(
       'docksExact',
       'Docks required, before rounding',
-      'manual hours ÷ (hours per dock × substitution factor)',
+      'addressable manual hours ÷ productive hours per dock',
       'countExact',
-      (m) =>
-        `${n(m.manualHours)} ÷ (${n(m.hoursPerDock)} × ${n(params.subFactor)}) = ${n(m.docksExact)}`,
+      (m) => `${n(m.addressableHours)} ÷ ${n(m.productiveHoursPerDock)} = ${n(m.docksExact)}`,
       (m) => m.docksExact,
     ),
     line(
@@ -151,17 +200,17 @@ export function buildAudit(
     line(
       'saving',
       'Annual saving',
-      'manual cost − autonomous cost',
+      'addressable manual cost − autonomous cost',
       'currency',
-      (m) => `${n(m.manualCost)} − ${n(m.autoCost)} = ${n(m.saving)}`,
+      (m) => `${n(m.addressableManualCost)} − ${n(m.autoCost)} = ${n(m.saving)}`,
       (m) => m.saving,
     ),
     line(
       'costRatio',
-      'Cost ratio',
-      'autonomous cost ÷ manual cost',
+      'Cost ratio, addressable scope',
+      'autonomous cost ÷ addressable manual cost',
       'percent',
-      (m) => `${n(m.autoCost)} ÷ ${n(m.manualCost)} = ${n(m.costRatio)}`,
+      (m) => `${n(m.autoCost)} ÷ ${n(m.addressableManualCost)} = ${n(m.costRatio)}`,
       (m) => m.costRatio,
     ),
     line(
@@ -178,13 +227,38 @@ export function buildAudit(
     line(
       'paybackMonths',
       'Payback',
-      'one-time implementation cost ÷ (annual saving ÷ 12)',
+      'implementation for this fleet ÷ (annual saving ÷ 12)',
       'months',
       (m) =>
         m.paybackMonths === null
           ? 'no payback at these inputs, the model does not save money here'
-          : `${n(params.implCost)} ÷ (${n(m.saving)} ÷ 12) = ${n(m.paybackMonths)}`,
+          : `${n(m.implCost)} ÷ (${n(m.saving)} ÷ 12) = ${n(m.paybackMonths)}`,
       (m) => m.paybackMonths,
+    ),
+    line(
+      'totalProgrammeCost',
+      'Total inspection programme cost, after',
+      'autonomous cost + non-addressable manual cost, what the customer still pays in total',
+      'currency',
+      (m) => `${n(m.autoCost)} + ${n(m.nonAddressableManualCost)} = ${n(m.totalProgrammeCost)}`,
+      (m) => m.totalProgrammeCost,
+    ),
+    line(
+      'programmeCostRatio',
+      'Total programme cost ratio',
+      'total programme cost after ÷ total manual cost before',
+      'percent',
+      (m) => `${n(m.totalProgrammeCost)} ÷ ${n(m.manualCost)} = ${n(m.programmeCostRatio)}`,
+      (m) => m.programmeCostRatio,
+    ),
+    line(
+      'implCost',
+      'Implementation for this fleet',
+      'programme base + docks × implementation per dock',
+      'currency',
+      (m) =>
+        `${n(params.implBase)} + ${n(m.docks)} × ${n(params.implPerDock)} = ${n(m.implCost)}`,
+      (m) => m.implCost,
     ),
     line(
       'hoursMultiple',

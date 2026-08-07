@@ -16,7 +16,10 @@ const LABELS: Record<string, string> = {
   opCost: 'Cost per Operator per Year',
   ratioNow: 'Docks per Operator Now',
   ratioScale: 'Docks per Operator at Scale',
-  implCost: 'Implementation Cost',
+  implBase: 'Implementation, programme base',
+  implPerDock: 'Implementation per dock',
+  utilisation: 'Dock utilisation',
+  addressableShare: 'Addressable share of manual hours',
 };
 
 export function labelFor(field: string): string {
@@ -213,7 +216,25 @@ export function validateParams(params: Params): Issue[] {
     'ratioNow',
     'ratioScale',
   ] as const;
-  const mustBeNonNegative = ['dockCost', 'opCost', 'implCost'] as const;
+  const mustBeNonNegative = ['dockCost', 'opCost', 'implBase', 'implPerDock'] as const;
+  // Fractions of a whole. Above 1.0 would claim a dock is productive for more
+  // hours than it operates, or that a drone addresses more work than exists.
+  const mustBeFraction = ['utilisation', 'addressableShare'] as const;
+
+  for (const field of mustBeFraction) {
+    const v = params[field];
+    const label = labelFor(field);
+    if (!Number.isFinite(v)) {
+      issues.push({ field, reason: `${label} is not a number` });
+    } else if (v <= 0) {
+      issues.push({ field, reason: `${label} is ${v}; it must be greater than zero` });
+    } else if (v > 1) {
+      issues.push({
+        field,
+        reason: `${label} is ${v}; it is a fraction of a whole and cannot exceed 1.0`,
+      });
+    }
+  }
 
   for (const field of mustBePositive) {
     const v = params[field];

@@ -39,7 +39,10 @@ export function scenarioCsv(result: ModelResult, params: Params, label: string):
     ['Cost per operator per year', params.opCost],
     ['Docks per operator now', params.ratioNow],
     ['Docks per operator at scale', params.ratioScale],
-    ['Implementation cost', params.implCost],
+    ['Implementation, programme base', params.implBase],
+    ['Implementation per dock', params.implPerDock],
+    ['Dock utilisation', params.utilisation],
+    ['Addressable share', params.addressableShare],
     ['Currency', params.currency],
     [],
   ];

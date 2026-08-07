@@ -76,19 +76,50 @@ and CSS, no external requests, openable offline and emailable as an attachment.
 ## The model
 
 ```
-manualHours   = resources × shiftHours × workDays
-manualCost    = resources × salary
-hourlyRate    = salary / (shiftHours × workDays)
-hoursPerDock  = dockHours × dockDays
-docks         = roundUp( manualHours / (hoursPerDock × subFactor) )
-operators     = roundUp( docks / docksPerOperator )
-autoCost      = docks × dockCost + operators × opCost
-saving        = manualCost − autoCost
-costRatio     = autoCost / manualCost
-returnPct     = saving / autoCost
-paybackMonths = implCost / (saving / 12)
-hoursMultiple = hoursPerDock / (shiftHours × workDays)
+manualHours           = resources × shiftHours × workDays
+manualCost            = resources × salary
+addressableHours      = manualHours × addressableShare
+addressableManualCost = manualCost × addressableShare
+hoursPerDock          = dockHours × dockDays
+productiveHours       = hoursPerDock × utilisation × subFactor
+docks                 = roundUp( addressableHours / productiveHours )
+operators             = roundUp( docks / docksPerOperator )
+autoCost              = docks × dockCost + operators × opCost
+saving                = addressableManualCost − autoCost
+costRatio             = autoCost / addressableManualCost
+totalProgrammeCost    = autoCost + nonAddressableManualCost
+implCost              = implBase + docks × implPerDock
+returnPct             = saving / autoCost
+paybackMonths         = implCost / (saving / 12)
 ```
+
+### Why the headline figures are not spectacular
+
+An earlier draft produced a payback of half a month and a 340% return. Those are alarm
+flags, not selling points, and three assumptions caused them.
+
+**A dock was treated as productive for all 8,760 hours it can operate.** Weather and
+daylight limits take roughly half, the battery charge duty cycle takes half again, and
+maintenance and connectivity take a little more. Compounded, a dock is realistically
+productive for 20–25% of its operating hours. `utilisation` is now explicit.
+
+**The entire manual programme was treated as displaceable.** Confined space entry,
+ultrasonic thickness measurement, tactile inspection, permits and reporting are not
+reachable by a drone. `addressableShare` is now explicit, and savings are measured only
+against the addressable scope, because the customer keeps paying for the rest.
+
+**Implementation was flat regardless of fleet size**, at $250,000 total, which works out at
+under $9,000 per dock for a 28-dock deployment. It now has a programme base plus a per-dock
+cost covering site survey, civils, power and network, regulatory approval, commissioning
+and training.
+
+With those corrected, a dock displaces roughly one FTE rather than 3.65, returns a little
+under twice its annual cost rather than 4.5×, and payback lands between 17 and 20 months
+for the major refinery cases.
+
+The original figures remain provable: `UNCALIBRATED_PARAMS` sets utilisation and
+addressable share to 1.0 and implementation per dock to 0, collapsing the model to its
+original form, and the published acceptance suite runs against it.
 
 The target-area scenario scales resources linearly by `targetArea / area`, recomputes every
 line, and substitutes the at-scale operator ratio. Nothing is averaged, smoothed or
@@ -107,6 +138,22 @@ Scaled resources at the target area are *not* rounded. They are a linear extrapo
 the customer's own staffing that nobody has committed to. Rounding 168.75 up to 169 would
 also inflate manual cost, which flatters the seller, and would turn manual cost into a
 step function that obscures the very contrast the target scenario exists to show.
+
+### What the calibrated model shows
+
+| Site | Cost ratio | Payback | Assessment |
+| --- | --- | --- | --- |
+| Ørsted, offshore substation | 30.7% | 8.5 mo | Strong case |
+| Aramco, Ras Tanura | 57.9% | 17.5 mo | Viable |
+| Shell, Pernis Refinery | 58.1% | 19.6 mo | Viable |
+| BP, Rotterdam | 59.8% | 20.1 mo | Viable |
+| Chevron, Pipeline North | 82.5% | 61.0 mo | Marginal |
+| Reliance, Jamnagar | 137% | none | Labour case does not stand alone |
+
+Offshore wins hardest, because sending a technician costs a vessel day and a helicopter
+slot. The Indian sites do not clear the bar on labour displacement alone: autonomous
+inspection costs roughly $33 per displaced labour hour, and local inspection labour costs
+less than that. The model says so rather than manufacturing a saving.
 
 ### Recommendation rule
 
@@ -139,9 +186,11 @@ business case built on this alone understates the value and should be read as a 
 none is an industry benchmark. They exist so the model runs before real figures are
 available, and must be replaced before customer use.
 
-**The substitution factor is the key uncertainty.** The default of 1.0 is deliberately
-conservative: a docked drone does not spend time mobilising to the asset, so the true figure
-is likely higher. It moves the dock count more than any other parameter.
+**Utilisation and addressable share are the key uncertainties.** They are the only two
+assumptions that are neither a commercial figure we can quote nor an answer the customer
+gave us, which is why the sensitivity section sweeps both as a grid. At the default
+settings, utilisation can fall from 25% to 22.8% before payback passes 24 months, about
+9% of headroom, which is thin enough that a site survey should precede any commitment.
 
 **No industry benchmark figure appears anywhere** in the interface, the workbook or the code.
 If a number is not derived from the model or supplied by the user, it does not appear.

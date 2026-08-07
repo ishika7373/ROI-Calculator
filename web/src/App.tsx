@@ -73,16 +73,33 @@ const PARAM_FIELDS: {
   { key: 'dockHours', label: 'Dock operating hours per day' },
   { key: 'dockDays', label: 'Operating days per year' },
   {
+    key: 'utilisation',
+    label: 'Dock utilisation',
+    step: 0.05,
+    help: 'Share of those operating hours that are actually productive. Weather and daylight limits take roughly half, the battery charge duty cycle takes half again, maintenance and connectivity take a little more. Treating 8,760 hours as productive is what makes a payback look like weeks.',
+  },
+  {
+    key: 'addressableShare',
+    label: 'Addressable share of manual hours',
+    step: 0.05,
+    help: 'How much of the inspection programme a drone can reach at all. External visual and thermal work is addressable. Confined space entry, ultrasonic thickness readings, tactile inspection, permits and reporting are not.',
+  },
+  {
     key: 'subFactor',
-    label: 'Substitution factor (drone hr : labour hr)',
+    label: 'Substitution factor (labour hr per productive drone hr)',
     step: 0.1,
-    help: 'The key uncertainty in this model. 1.0 is deliberately conservative: a docked drone does not spend time mobilising to the asset, so the true figure is likely higher. Raise it only against evidence from this site.',
+    help: 'Held at parity by default so that utilisation and addressable share carry the argument openly, rather than being hidden inside one fudge factor. Raise it only against evidence from this site.',
   },
   { key: 'dockCost', label: 'Cost per dock per year' },
   { key: 'opCost', label: 'Cost per operator per year' },
   { key: 'ratioNow', label: 'Docks per operator today', step: 0.5 },
   { key: 'ratioScale', label: 'Docks per operator at scale', step: 0.5 },
-  { key: 'implCost', label: 'One-time implementation' },
+  { key: 'implBase', label: 'Implementation, programme base' },
+  {
+    key: 'implPerDock',
+    label: 'Implementation per dock',
+    help: 'Site survey, civils and mounting, power and network, regulatory approval, commissioning, training. Implementation that does not scale with the fleet is the other half of an implausible payback.',
+  },
 ];
 
 /**
