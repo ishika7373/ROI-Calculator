@@ -1,0 +1,35 @@
+{
+  "name": "drone-roi",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Autonomous drone inspection ROI engine \u2014 one calculation core, two delivery modes.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "dev": "vite",
+    "build": "vite build",
+    "build:single": "BUILD_SINGLE=1 vite build",
+    "preview": "vite preview",
+    "batch": "tsx batch/cli.ts"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^5.2.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.10",
+    "typescript": "^5.9.2",
+    "vite": "^7.3.6",
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@office-kit/xlsx": "^0.9.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}

@@ -1,0 +1,160 @@
+@import 'tailwindcss';
+
+/*
+  Restrained industrial-consulting register, not a dashboard template.
+
+  The palette is fixed by specification and the page commits to it deliberately
+  rather than offering a second theme: amber always signals cost and risk, moss
+  always signals value released, steel is structural. Inverting those would
+  invert their meaning.
+*/
+@theme {
+  --color-ink: #0e1c24;
+  --color-paper: #f4f6f4;
+  --color-panel: #ffffff;
+  --color-steel: #3f6b7a;
+  --color-steel-tint: #e4edef;
+  --color-amber: #b4600f;
+  --color-amber-tint: #fbeedf;
+  --color-moss: #2f6b4f;
+  --color-moss-tint: #e4efe8;
+  --color-muted: #63767e;
+  --color-rule: #cfd8d6;
+
+  --font-sans: 'Helvetica Neue', Helvetica, 'Segoe UI', system-ui, sans-serif;
+  --radius-none: 0px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Wide content scrolls inside its own box; nothing pushes the body sideways. */
+html,
+body {
+  max-width: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+/* One typeface at varying weights; tabular figures everywhere digits align. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Inputs: square corners, 1px rules, visible focus. */
+.field {
+  width: 100%;
+  border: 1px solid var(--color-rule);
+  background: var(--color-panel);
+  padding: 0.5rem 0.625rem;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
+  border-radius: 0;
+}
+.field:focus-visible {
+  outline: 2px solid var(--color-steel);
+  outline-offset: -1px;
+  border-color: var(--color-steel);
+}
+.field::placeholder {
+  color: var(--color-muted);
+  opacity: 0.7;
+}
+
+button {
+  border-radius: 0;
+  font: inherit;
+}
+button:focus-visible,
+a:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-steel);
+  outline-offset: 2px;
+}
+
+.question {
+  font-style: italic;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/* Print: one clean page, audit table intact, chrome removed. */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+  body {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-stack {
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .print-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 8mm;
+  }
+  table {
+    font-size: 8pt;
+  }
+  .print-compact {
+    padding: 0 !important;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+/* Scrollbars in the rails stay unobtrusive. */
+.thin-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-rule);
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
