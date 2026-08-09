@@ -35,7 +35,8 @@ batch/       Node CLI: reads a workbook, calls core per row, writes Drone_ROI_Ou
 workbook/    Shared workbook builder. Called by both the CLI and the browser.
 fixtures/    The mock portfolio, built to exercise the awkward cases.
 tests/       Unit tests, purity tests, the parity test, workbook integrity.
-samples/     A generated workbook and the standalone HTML build.
+samples/     A generated workbook, the standalone HTML build, and the single-file
+             discovery model used in the call itself.
 ```
 
 `core/` importing nothing outside itself is asserted by a test, not left to convention.

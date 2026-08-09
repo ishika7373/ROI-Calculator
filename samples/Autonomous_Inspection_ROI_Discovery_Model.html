@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autonomous Inspection ROI — Discovery Model</title>
+<meta name="description" content="Labour-displacement ROI model for autonomous drone inspection. Every input is a discovery question. No benchmark figures.">
+<style>
+  :root{
+    --ink:#16262B;
+    --ink-2:#41585F;
+    --ink-3:#6E8189;
+    --steel:#DCE3DE;
+    --panel:#FBFCFA;
+    --rule:#BFC9C3;
+    --rule-2:#8FA098;
+    --amber:#A05A06;
+    --amber-soft:#F2E0C6;
+    --teal:#0B6157;
+    --teal-soft:#CADFD9;
+    --flag:#8C2F1E;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--steel);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 20px 72px}
+
+  /* ---------- type primitives ---------- */
+  .tag{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+  }
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  h1{
+    font-size:clamp(28px,4.4vw,44px);
+    line-height:1.08;
+    letter-spacing:-.02em;
+    font-weight:600;
+    margin:12px 0 0;
+    max-width:20ch;
+  }
+  h2{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    font-weight:600;
+    color:var(--ink-2);
+    margin:0 0 14px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--rule);
+  }
+  h3{font-size:14px;font-weight:600;margin:0 0 4px}
+  p{margin:0 0 12px}
+  .lede{font-size:16.5px;color:var(--ink-2);max-width:62ch;margin-top:14px}
+  .fine{font-size:12.5px;color:var(--ink-3);line-height:1.5}
+
+  /* ---------- masthead ---------- */
+  header{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:26px}
+  .masthead-rule{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:baseline}
+  .note-strip{
+    margin-top:18px;padding:10px 14px;
+    background:var(--panel);
+    border-left:3px solid var(--amber);
+    font-size:13px;color:var(--ink-2);max-width:74ch;
+  }
+
+  /* ---------- layout ---------- */
+  .cols{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:26px;align-items:start}
+  @media (max-width:900px){.cols{grid-template-columns:1fr}}
+
+  .panel{background:var(--panel);border:1px solid var(--rule);padding:18px}
+  .panel + .panel{margin-top:20px}
+
+  /* ---------- inputs ---------- */
+  .qgroup{margin-bottom:18px}
+  .qgroup:last-child{margin-bottom:0}
+  .q{
+    font-size:12.5px;color:var(--ink-2);font-style:italic;
+    margin:0 0 8px;padding-left:10px;border-left:2px solid var(--rule);
+    line-height:1.45;
+  }
+  .field{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
+  .field label{font-size:13px;color:var(--ink);flex:1;min-width:0}
+  .field .unit{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em}
+  input[type=number]{
+    font-family:var(--mono);font-variant-numeric:tabular-nums;
+    width:96px;flex:none;text-align:right;
+    padding:5px 7px;font-size:13px;
+    border:1px solid var(--rule-2);background:#fff;color:var(--ink);
+    border-radius:0;
+  }
+  input[type=number]:focus-visible{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
+  details.adv{margin-top:16px;border-top:1px solid var(--rule);padding-top:12px}
+  details.adv summary{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-2);cursor:pointer;
+  }
+  details.adv summary:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  details.adv[open] summary{margin-bottom:14px}
+
+  .btnrow{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  button{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+    padding:8px 12px;border:1px solid var(--ink);background:transparent;color:var(--ink);
+    cursor:pointer;border-radius:0;
+  }
+  button:hover{background:var(--ink);color:var(--panel)}
+  button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+  /* ---------- reconciliation: the signature ---------- */
+  .recon{background:var(--ink);color:var(--panel);padding:20px;border:1px solid var(--ink)}
+  .recon h2{color:#A9BDBA;border-color:#33474D}
+  .bar-row{margin-bottom:12px}
+  .bar-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;margin-bottom:4px}
+  .bar-head .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:14px}
+  .bar-track{height:16px;background:#25383E;position:relative;overflow:hidden}
+  .bar-fill{height:100%;transition:width .35s ease}
+  .bar-stated .bar-fill{background:#7E8F94}
+  .bar-implied .bar-fill{background:var(--teal-soft)}
+  .recon-read{
+    margin-top:14px;padding-top:14px;border-top:1px solid #33474D;
+    font-size:13px;color:#C6D3D2;line-height:1.5;
+  }
+  .recon-read strong{color:#fff;font-weight:600}
+
+  /* ---------- headline figures ---------- */
+  .heads{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
+  .head-cell{background:var(--panel);padding:14px 14px 12px}
+  .head-cell .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:clamp(20px,2.6vw,27px);line-height:1.1;letter-spacing:-.02em;display:block;margin:5px 0 3px}
+  .head-cell .sub{font-size:11.5px;color:var(--ink-3);line-height:1.4}
+  .v-amber{color:var(--amber)}
+  .v-teal{color:var(--teal)}
+
+  /* ---------- ledgers ---------- */
+  .ledgers{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:700px){.ledgers{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-3);text-align:left;font-weight:500;
+    padding:0 0 6px;border-bottom:1px solid var(--rule);
+  }
+  th.r,td.r{text-align:right}
+  td{padding:6px 0;border-bottom:1px solid #E7EBE7;vertical-align:top}
+  td.r{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  tr.total td{border-bottom:none;border-top:2px solid var(--ink);font-weight:600;padding-top:9px}
+  .swatch{display:inline-block;width:8px;height:8px;margin-right:7px;vertical-align:1px}
+  .sw-amber{background:var(--amber)}
+  .sw-teal{background:var(--teal)}
+  .why{font-size:11.5px;color:var(--ink-3);display:block;line-height:1.4;margin-top:1px}
+
+  /* ---------- chart ---------- */
+  .chart-wrap{margin-top:4px}
+  svg{display:block;width:100%;height:auto}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--ink-2)}
+
+  /* ---------- scenarios ---------- */
+  .scen{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule)}
+  @media (max-width:640px){.scen{grid-template-columns:1fr}}
+  .scen-cell{background:var(--panel);padding:13px}
+  .scen-cell .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:19px;display:block;margin:4px 0 2px}
+
+  /* ---------- omissions ---------- */
+  .omit td:first-child{color:var(--ink-3)}
+  .omit .v-empty{font-family:var(--mono);color:var(--rule-2);letter-spacing:.1em}
+
+  .flag{
+    background:#F6E7E3;border-left:3px solid var(--flag);
+    padding:9px 12px;font-size:12.5px;color:#5E2115;margin-top:12px;
+  }
+  .flag[hidden]{display:none}
+
+  footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--rule)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="masthead-rule">
+    <span class="tag">Project Pegasus &nbsp;/&nbsp; Deliverable 4 &nbsp;/&nbsp; Discovery model</span>
+    <span class="tag">Labour displacement only &nbsp;·&nbsp; EUR</span>
+  </div>
+  <h1>What the inspection work costs, in their numbers.</h1>
+  <p class="lede">Six answers given in a room, turned into one figure the customer will restate to their own director. Every field below is a question from the discovery call, not an assumption carried in from a benchmark.</p>
+  <div class="note-strip">
+    <strong>This model prices one pool: displaced inspection labour.</strong> It is the conservative floor, chosen because it is the only pool that can be populated from answers given in a single conversation. Scaffolding avoidance, turnaround deferral, unplanned downtime and compliance exposure are deliberately unpriced &mdash; listed at the foot of this page with the reason for each.
+  </div>
+</header>
+
+<noscript>
+  <div class="panel" style="margin-bottom:24px;border-left:3px solid var(--flag)">
+    <h2>Static reference &mdash; scripting disabled</h2>
+    <p class="fine">The interactive model needs JavaScript. The structure and the base case are below so the method is readable without it.</p>
+    <p class="fine"><strong>Manual annual cost</strong> = points &times; inspections/yr &times; (access + capture + admin hours) &times; loaded hourly rate.<br>
+    <strong>Loaded hourly rate</strong> = fully loaded annual cost &divide; (FTE working days &times; shift hours).<br>
+    <strong>Autonomous annual cost</strong> = docks &times; (platform + amortisation + connectivity + partner service) + operators &times; loaded annual cost + review labour + residual manual access.<br>
+    <strong>Operators</strong> = ceiling(docks &divide; docks per operator).</p>
+    <p class="fine">Base case: 1,200 inspection points, 4 inspections each per year, 18.5 crew hours per inspection, &euro;95,000 fully loaded per resource, 225 FTE days &times; 8 hours, 8 docks. Manual &asymp; &euro;4.69m/yr against an autonomous cost near &euro;1.05m/yr at thirteen times the coverage.</p>
+  </div>
+</noscript>
+
+<div class="cols">
+
+  <!-- ============ INPUTS ============ -->
+  <div>
+    <section class="panel">
+      <h2>The six questions</h2>
+
+      <div class="qgroup">
+        <p class="q">&ldquo;How many things at this site actually get inspected, and how often?&rdquo;</p>
+        <div class="field">
+          <label for="points">Inspection points in scope</label>
+          <input type="number" id="points" value="1200" min="1" step="10">
+        </div>
+        <div class="field">
+          <label for="freq">Inspections per point <span class="unit">/ YR</span></label>
+          <input type="number" id="freq" value="4" min="0.25" step="0.25">
+        </div>
+      </div>
+
+      <div class="qgroup">
+        <p class="q">&ldquo;When a tank roof needs inspecting, walk me through what has to happen. Who mobilises, how long does the permit take, what is standing by while it runs?&rdquo;</p>
+        <div class="field">
+          <label for="hAccess">Access, permit &amp; standby <span class="unit">HRS</span></label>
+          <input type="number" id="hAccess" value="14" min="0" step="0.5">
+        </div>
+        <div class="field">
+          <label for="hCapture">The inspection itself <span class="unit">HRS</span></label>
+          <input type="number" id="hCapture" value="3" min="0" step="0.5">
+        </div>
+        <div class="field">
+          <label for="hAdmin">Write-up &amp; retyping <span class="unit">HRS</span></label>
+          <input type="number" id="hAdmin" value="1.5" min="0" step="0.5">
+        </div>
+      </div>
+
+      <div class="qgroup">
+        <p class="q">&ldquo;What does a resource on this work cost you fully loaded, and how many days a year are they actually available?&rdquo;</p>
+        <div class="field">
+          <label for="loadedCost">Fully loaded annual cost <span class="unit">EUR</span></label>
+          <input type="number" id="loadedCost" value="95000" min="1000" step="1000">
+        </div>
+        <div class="field">
+          <label for="fteDays">Working days per FTE <span class="unit">/ YR</span></label>
+          <input type="number" id="fteDays" value="225" min="1" max="365" step="1">
+        </div>
+        <div class="field">
+          <label for="shiftHours">Productive hours per day</label>
+          <input type="number" id="shiftHours" value="8" min="1" max="24" step="0.5">
+        </div>
+      </div>
+
+      <div class="qgroup">
+        <p class="q">&ldquo;How many people would you say sit on this work today?&rdquo; &mdash; asked last, and never used as an input to the cost.</p>
+        <div class="field">
+          <label for="stated">Headcount they state</label>
+          <input type="number" id="stated" value="100" min="0" step="1">
+        </div>
+      </div>
+
+      <details class="adv">
+        <summary>Autonomous side &amp; asset calendar</summary>
+
+        <div class="qgroup">
+          <div class="field"><label for="docks">Docks deployed</label><input type="number" id="docks" value="8" min="1" step="1"></div>
+          <div class="field"><label for="docksPerOp">Docks per operator</label><input type="number" id="docksPerOp" value="8" min="1" step="1"></div>
+          <div class="field"><label for="autoFreq">Autonomous passes per point <span class="unit">/ YR</span></label><input type="number" id="autoFreq" value="52" min="1" step="1"></div>
+          <div class="field"><label for="missionMin">Minutes per pass</label><input type="number" id="missionMin" value="18" min="1" step="1"></div>
+        </div>
+
+        <div class="qgroup">
+          <div class="field"><label for="opDays">Asset operating days <span class="unit">/ YR</span></label><input type="number" id="opDays" value="350" min="1" max="365" step="1"></div>
+          <div class="field"><label for="dockHours">Dock flying hours per day</label><input type="number" id="dockHours" value="20" min="1" max="24" step="1"></div>
+          <div class="field"><label for="util">Usable share of window <span class="unit">%</span></label><input type="number" id="util" value="70" min="10" max="100" step="5"></div>
+        </div>
+
+        <div class="qgroup">
+          <div class="field"><label for="platform">Platform per dock <span class="unit">EUR/YR</span></label><input type="number" id="platform" value="18000" min="0" step="500"></div>
+          <div class="field"><label for="capex">Dock capex <span class="unit">EUR</span></label><input type="number" id="capex" value="55000" min="0" step="1000"></div>
+          <div class="field"><label for="life">Dock life <span class="unit">YRS</span></label><input type="number" id="life" value="5" min="1" step="1"></div>
+          <div class="field"><label for="conn">Connectivity per dock <span class="unit">EUR/YR</span></label><input type="number" id="conn" value="3600" min="0" step="100"></div>
+          <div class="field"><label for="service">Partner service per dock <span class="unit">EUR/YR</span></label><input type="number" id="service" value="12000" min="0" step="500"></div>
+        </div>
+
+        <div class="qgroup">
+          <div class="field"><label for="reviewMin">Engineer review per pass <span class="unit">MIN</span></label><input type="number" id="reviewMin" value="4" min="0" step="0.5"></div>
+          <div class="field"><label for="residual">Inspections still needing entry <span class="unit">%</span></label><input type="number" id="residual" value="8" min="0" max="100" step="1"></div>
+          <div class="field"><label for="targetPoints">Replication target <span class="unit">POINTS</span></label><input type="number" id="targetPoints" value="2400" min="1" step="100"></div>
+        </div>
+      </details>
+
+      <div class="btnrow">
+        <button type="button" id="copy">Copy scenario link</button>
+        <button type="button" id="reset">Reset</button>
+      </div>
+      <p class="fine" style="margin-top:10px">Every input is carried in the address bar, so a scenario agreed in a call can be sent to the sponsor unchanged and reopened with their numbers still in it.</p>
+    </section>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <div>
+
+    <!-- signature: reconciliation -->
+    <section class="recon">
+      <h2>Reconciliation &mdash; read this before the savings</h2>
+      <div class="bar-row bar-stated">
+        <div class="bar-head"><span>Headcount stated in the room</span><span class="v" id="statedV">&mdash;</span></div>
+        <div class="bar-track"><div class="bar-fill" id="statedBar" style="width:0%"></div></div>
+      </div>
+      <div class="bar-row bar-implied">
+        <div class="bar-head"><span>Accounted for by the work described</span><span class="v" id="impliedV">&mdash;</span></div>
+        <div class="bar-track"><div class="bar-fill" id="impliedBar" style="width:0%"></div></div>
+      </div>
+      <p class="recon-read" id="reconRead">&mdash;</p>
+    </section>
+
+    <section class="panel">
+      <h2>At current scope</h2>
+      <div class="heads">
+        <div class="head-cell">
+          <span class="tag">Manual, per year</span>
+          <span class="v v-amber" id="manualTotal">&mdash;</span>
+          <span class="sub">Inspection labour only</span>
+        </div>
+        <div class="head-cell">
+          <span class="tag">Autonomous, per year</span>
+          <span class="v v-teal" id="autoTotal">&mdash;</span>
+          <span class="sub" id="autoSub">&mdash;</span>
+        </div>
+        <div class="head-cell">
+          <span class="tag">Cost per point per year</span>
+          <span class="v" id="perPoint">&mdash;</span>
+          <span class="sub" id="perPointSub">&mdash;</span>
+        </div>
+        <div class="head-cell">
+          <span class="tag">Capex payback</span>
+          <span class="v" id="payback">&mdash;</span>
+          <span class="sub" id="paybackSub">&mdash;</span>
+        </div>
+      </div>
+      <div class="flag" id="capFlag" hidden></div>
+      <p class="fine" style="margin-top:12px" id="lfl">&mdash;</p>
+    </section>
+
+    <section class="panel">
+      <h2>Where the money goes</h2>
+      <div class="ledgers">
+        <div>
+          <h3><span class="swatch sw-amber"></span>Manual cycle</h3>
+          <table>
+            <thead><tr><th>Component</th><th class="r">EUR / yr</th><th class="r">Share</th></tr></thead>
+            <tbody id="manualLedger"></tbody>
+          </table>
+        </div>
+        <div>
+          <h3><span class="swatch sw-teal"></span>Autonomous cycle</h3>
+          <table>
+            <thead><tr><th>Component</th><th class="r">EUR / yr</th><th class="r">Share</th></tr></thead>
+            <tbody id="autoLedger"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Scaling to the replication target</h2>
+      <p class="fine" style="margin-bottom:12px">Manual cost scales with the work. Autonomous cost steps only when dock capacity is exceeded, which is the whole structural argument &mdash; and the reason the second site does not cost what the first site cost.</p>
+      <div class="chart-wrap" id="chart"></div>
+      <div class="legend">
+        <span><span class="swatch sw-amber"></span>Manual</span>
+        <span><span class="swatch sw-teal"></span>Autonomous</span>
+        <span class="fine" id="chartRead"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>If the two softest inputs are wrong</h2>
+      <p class="fine" style="margin-bottom:12px">Access hours and loaded cost carry the model. Both are estimates given verbally. The band below moves each by a quarter in the unfavourable and favourable direction together.</p>
+      <div class="scen">
+        <div class="scen-cell"><span class="tag">Conservative &minus;25%</span><span class="v" id="scenLow">&mdash;</span><span class="sub fine">Net annual release</span></div>
+        <div class="scen-cell"><span class="tag">As stated</span><span class="v" id="scenBase">&mdash;</span><span class="sub fine">Net annual release</span></div>
+        <div class="scen-cell"><span class="tag">Favourable +25%</span><span class="v" id="scenHigh">&mdash;</span><span class="sub fine">Net annual release</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Not priced here, and why</h2>
+      <table class="omit">
+        <thead><tr><th>Value pool</th><th class="r">Priced</th><th>Reason for leaving it out</th></tr></thead>
+        <tbody>
+          <tr><td>Scaffolding &amp; rope access avoided</td><td class="r v-empty">&mdash;</td><td class="fine">Contractor rates are site-specific and were not available. Typically the largest single omission.</td></tr>
+          <tr><td>Turnaround slot returned</td><td class="r v-empty">&mdash;</td><td class="fine">Requires the site's own deferral economics. Cannot be estimated from outside.</td></tr>
+          <tr><td>Unplanned downtime avoided</td><td class="r v-empty">&mdash;</td><td class="fine">Needs contribution margin per hour, which sits with finance rather than with the site.</td></tr>
+          <tr><td>Compliance &amp; emissions exposure</td><td class="r v-empty">&mdash;</td><td class="fine">Value is evidence quality under OGMP reporting, not cost avoided. Wrong unit for this model.</td></tr>
+          <tr><td>Safety exposure hours removed</td><td class="r v-empty">&mdash;</td><td class="fine">Deliberately not monetised. Pricing exposure hours invites an argument the account does not need.</td></tr>
+        </tbody>
+      </table>
+      <p class="fine" style="margin-top:12px">Each omission moves the case in one direction only. The figure above is therefore a floor, and it is quoted as a floor.</p>
+    </section>
+
+    <footer>
+      <p class="fine">Prepared as an independent discovery instrument. No benchmark or vendor-supplied figures are used anywhere in this model &mdash; the defaults shown are placeholders to demonstrate structure and must be replaced with customer-supplied values before any figure is quoted. Where an input cannot be obtained in the call, the correct action is to leave the pool unpriced rather than to estimate it.</p>
+    </footer>
+
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var IDS = ["points","freq","hAccess","hCapture","hAdmin","loadedCost","fteDays","shiftHours",
+             "stated","docks","docksPerOp","autoFreq","missionMin","opDays","dockHours","util",
+             "platform","capex","life","conn","service","reviewMin","residual","targetPoints"];
+
+  var DEFAULTS = {};
+  IDS.forEach(function(id){ DEFAULTS[id] = document.getElementById(id).value; });
+
+  var eur0 = new Intl.NumberFormat("en-IE",{style:"currency",currency:"EUR",maximumFractionDigits:0});
+  var eur2 = new Intl.NumberFormat("en-IE",{style:"currency",currency:"EUR",maximumFractionDigits:0});
+  var n1 = new Intl.NumberFormat("en-IE",{maximumFractionDigits:1});
+  var n0 = new Intl.NumberFormat("en-IE",{maximumFractionDigits:0});
+
+  function val(id){
+    var v = parseFloat(document.getElementById(id).value);
+    return isFinite(v) ? v : parseFloat(DEFAULTS[id]);
+  }
+
+  function compute(over){
+    over = over || {};
+    function g(id){ return (id in over) ? over[id] : val(id); }
+
+    var points = g("points"), freq = g("freq");
+    var hAccess = g("hAccess"), hCapture = g("hCapture"), hAdmin = g("hAdmin");
+    var loaded = g("loadedCost"), fteDays = g("fteDays"), shiftHours = g("shiftHours");
+    var docks = g("docks"), docksPerOp = g("docksPerOp"), autoFreq = g("autoFreq");
+    var missionMin = g("missionMin"), opDays = g("opDays"), dockHours = g("dockHours"), util = g("util")/100;
+    var platform = g("platform"), capex = g("capex"), life = g("life"), conn = g("conn"), service = g("service");
+    var reviewMin = g("reviewMin"), residual = g("residual")/100;
+
+    var fteHours = Math.max(fteDays * shiftHours, 1);
+    var rate = loaded / fteHours;                       // fully loaded hourly
+    var hPer = hAccess + hCapture + hAdmin;             // crew hours per manual inspection
+    var passes = points * freq;
+
+    // ---- manual ----
+    var mAccess  = passes * hAccess  * rate;
+    var mCapture = passes * hCapture * rate;
+    var mAdmin   = passes * hAdmin   * rate;
+    var manual = mAccess + mCapture + mAdmin;
+    var manualHours = passes * hPer;
+    var impliedFTE = manualHours / fteHours;
+
+    // ---- autonomous ----
+    var operators = Math.ceil(docks / Math.max(docksPerOp,1));
+    var aPlatform = docks * platform;
+    var aAmort    = docks * (capex / Math.max(life,1));
+    var aConn     = docks * conn;
+    var aService  = docks * service;
+    var aOps      = operators * loaded;
+    var aReview   = points * autoFreq * (reviewMin/60) * rate;
+    var aResidual = points * freq * residual * hPer * rate;
+    var auto = aPlatform + aAmort + aConn + aService + aOps + aReview + aResidual;
+
+    // capacity
+    var capPerDock = opDays * dockHours * 60 * util;    // usable minutes per dock per year
+    var needMin = points * autoFreq * missionMin;
+    var docksNeeded = Math.ceil(needMin / Math.max(capPerDock,1));
+    var dockUtil = needMin / Math.max(capPerDock * docks, 1);
+
+    // like-for-like: autonomous priced at the manual frequency, on minimum viable docks
+    var lflDocks = Math.max(1, Math.ceil(points * freq * missionMin / Math.max(capPerDock,1)));
+    var lflOps = Math.ceil(lflDocks / Math.max(docksPerOp,1));
+    var lfl = lflDocks*(platform + capex/Math.max(life,1) + conn + service)
+            + lflOps*loaded
+            + points*freq*(reviewMin/60)*rate
+            + aResidual;
+
+    var saving = manual - auto;
+    var totalCapex = docks * capex;
+
+    return {
+      rate:rate, hPer:hPer, passes:passes, manualHours:manualHours, impliedFTE:impliedFTE,
+      manual:manual, mAccess:mAccess, mCapture:mCapture, mAdmin:mAdmin,
+      auto:auto, aPlatform:aPlatform, aAmort:aAmort, aConn:aConn, aService:aService,
+      aOps:aOps, aReview:aReview, aResidual:aResidual, operators:operators,
+      saving:saving, totalCapex:totalCapex,
+      manualPerPoint: manual/Math.max(points,1),
+      autoPerPoint: auto/Math.max(points,1),
+      manualPerPass: manual/Math.max(passes,1),
+      autoPerPass: auto/Math.max(points*autoFreq,1),
+      docksNeeded:docksNeeded, dockUtil:dockUtil, capPerDock:capPerDock,
+      lfl:lfl, coverageMult: autoFreq/Math.max(freq,0.0001),
+      points:points, freq:freq, autoFreq:autoFreq, docks:docks
+    };
+  }
+
+  function row(label, why, amount, total){
+    var share = total > 0 ? (amount/total*100) : 0;
+    return "<tr><td>" + label + (why ? "<span class='why'>" + why + "</span>" : "") +
+           "</td><td class='r'>" + eur0.format(amount) +
+           "</td><td class='r'>" + n0.format(share) + "%</td></tr>";
+  }
+
+  function drawChart(r){
+    var W = 700, H = 260, padL = 66, padR = 14, padT = 14, padB = 34;
+    var from = r.points, to = Math.max(val("targetPoints"), r.points * 1.05);
+    var steps = 40, pts = [];
+    var capPerDock = r.capPerDock;
+    var missionMin = val("missionMin"), autoFreq = val("autoFreq"), freq = val("freq");
+    var platform = val("platform"), capex = val("capex"), life = val("life");
+    var conn = val("conn"), service = val("service"), loaded = val("loadedCost");
+    var docksPerOp = val("docksPerOp"), reviewMin = val("reviewMin"), residual = val("residual")/100;
+
+    var maxY = 0;
+    for (var i=0;i<=steps;i++){
+      var p = from + (to-from)*i/steps;
+      var m = p*freq*r.hPer*r.rate;
+      var d = Math.max(1, Math.ceil(p*autoFreq*missionMin/Math.max(capPerDock,1)));
+      var o = Math.ceil(d/Math.max(docksPerOp,1));
+      var a = d*(platform + capex/Math.max(life,1) + conn + service) + o*loaded
+            + p*autoFreq*(reviewMin/60)*r.rate + p*freq*residual*r.hPer*r.rate;
+      pts.push({p:p,m:m,a:a});
+      if (m>maxY) maxY=m; if (a>maxY) maxY=a;
+    }
+    maxY = maxY*1.08;
+
+    function X(p){ return padL + (p-from)/(to-from)*(W-padL-padR); }
+    function Y(v){ return H-padB - (v/maxY)*(H-padT-padB); }
+
+    var mPath = "", aPath = "";
+    pts.forEach(function(q,i){
+      mPath += (i?" L":"M") + X(q.p).toFixed(1) + " " + Y(q.m).toFixed(1);
+      aPath += (i?" L":"M") + X(q.p).toFixed(1) + " " + Y(q.a).toFixed(1);
+    });
+
+    var grid = "", labels = "";
+    for (var k=0;k<=4;k++){
+      var v = maxY*k/4, y = Y(v);
+      grid += "<line x1='"+padL+"' y1='"+y.toFixed(1)+"' x2='"+(W-padR)+"' y2='"+y.toFixed(1)+"' stroke='#D3DAD5' stroke-width='1'/>";
+      labels += "<text x='"+(padL-8)+"' y='"+(y+3.5).toFixed(1)+"' text-anchor='end' font-family='ui-monospace,monospace' font-size='9.5' fill='#6E8189'>"+
+                (v>=1e6 ? (v/1e6).toFixed(1)+"m" : Math.round(v/1000)+"k")+"</text>";
+    }
+    var xlab = "<text x='"+padL+"' y='"+(H-12)+"' font-family='ui-monospace,monospace' font-size='9.5' fill='#6E8189'>"+n0.format(from)+" points</text>" +
+               "<text x='"+(W-padR)+"' y='"+(H-12)+"' text-anchor='end' font-family='ui-monospace,monospace' font-size='9.5' fill='#6E8189'>"+n0.format(to)+" points</text>";
+
+    document.getElementById("chart").innerHTML =
+      "<svg viewBox='0 0 "+W+" "+H+"' role='img' aria-label='Annual cost against inspection points in scope, manual against autonomous'>"+
+      grid + labels + xlab +
+      "<path d='"+mPath+"' fill='none' stroke='#A05A06' stroke-width='2.2'/>"+
+      "<path d='"+aPath+"' fill='none' stroke='#0B6157' stroke-width='2.2'/>"+
+      "</svg>";
+
+    var last = pts[pts.length-1];
+    document.getElementById("chartRead").textContent =
+      "At " + n0.format(to) + " points the gap is " + eur0.format(last.m - last.a) + " per year.";
+  }
+
+  function render(){
+    var r = compute();
+
+    // reconciliation
+    var stated = val("stated");
+    var maxFTE = Math.max(stated, r.impliedFTE, 1);
+    document.getElementById("statedV").textContent = n0.format(stated) + " FTE";
+    document.getElementById("impliedV").textContent = n1.format(r.impliedFTE) + " FTE";
+    document.getElementById("statedBar").style.width = (stated/maxFTE*100) + "%";
+    document.getElementById("impliedBar").style.width = (r.impliedFTE/maxFTE*100) + "%";
+
+    var gap = stated - r.impliedFTE;
+    var reconTxt;
+    if (Math.abs(gap) < Math.max(stated*0.1, 1)) {
+      reconTxt = "The work as described accounts for the headcount stated, within ten per cent. <strong>The baseline is sound</strong> &mdash; the cost figures below can be used without further qualification.";
+    } else if (gap > 0) {
+      reconTxt = "<strong>" + n1.format(gap) + " FTE of the stated headcount is not explained by the work described.</strong> That is not an error in the model, it is the next question: supervision, planning, standby, or scope this model has not been told about. Ask which, and price only what comes back.";
+    } else {
+      reconTxt = "<strong>The work described needs " + n1.format(-gap) + " more FTE than stated.</strong> Either the hours per inspection are overstated, or the site is running the programme with contractor capacity that was not counted. Resolve before quoting anything.";
+    }
+    document.getElementById("reconRead").innerHTML = reconTxt;
+
+    // headlines
+    document.getElementById("manualTotal").textContent = eur0.format(r.manual);
+    document.getElementById("autoTotal").textContent = eur0.format(r.auto);
+    document.getElementById("autoSub").textContent =
+      n0.format(r.coverageMult) + "\u00D7 the coverage, " + r.operators + " operator" + (r.operators>1?"s":"") + " on " + r.docks + " docks";
+
+    document.getElementById("perPoint").innerHTML =
+      "<span class='v-amber'>" + eur0.format(r.manualPerPoint) + "</span> \u2192 <span class='v-teal'>" + eur0.format(r.autoPerPoint) + "</span>";
+    document.getElementById("perPointSub").textContent =
+      r.manualPerPoint > 0 ? n1.format(r.manualPerPoint/Math.max(r.autoPerPoint,1)) + "\u00D7 lower, at higher frequency" : "\u2014";
+
+    var monthly = r.saving/12;
+    if (monthly > 0) {
+      var months = r.totalCapex/monthly;
+      document.getElementById("payback").textContent = n1.format(months) + " mo";
+      document.getElementById("paybackSub").textContent = "On " + eur0.format(r.totalCapex) + " of dock capex";
+    } else {
+      document.getElementById("payback").textContent = "None";
+      document.getElementById("paybackSub").textContent = "Autonomous cost exceeds manual at this scope";
+    }
+
+    document.getElementById("lfl").innerHTML =
+      "Compared like for like &mdash; autonomous priced at the same " + n1.format(r.freq) +
+      " inspections per point, on the minimum docks that scope needs &mdash; the annual cost is <strong>" +
+      eur0.format(r.lfl) + "</strong>. The figure above is higher because it buys " + n0.format(r.coverageMult) +
+      "\u00D7 the coverage. Quote whichever the conversation is actually about, and never present the frequency increase as a saving.";
+
+    // capacity flag
+    var flag = document.getElementById("capFlag");
+    if (r.docksNeeded > r.docks) {
+      flag.hidden = false;
+      flag.innerHTML = "<strong>Capacity shortfall.</strong> " + n0.format(r.autoFreq) + " passes across " +
+        n0.format(r.points) + " points needs " + r.docksNeeded + " docks at the stated mission time. " +
+        r.docks + " are deployed. Either the frequency is not achievable or the mission time is overstated \u2014 resolve before quoting.";
+    } else { flag.hidden = true; }
+
+    // ledgers
+    document.getElementById("manualLedger").innerHTML =
+      row("Access, permit &amp; standby","Scaffold, rope, permit-to-work, standby cover",r.mAccess,r.manual) +
+      row("Capture","The inspection itself",r.mCapture,r.manual) +
+      row("Write-up","Report authoring and retyping into systems",r.mAdmin,r.manual) +
+      "<tr class='total'><td>Total</td><td class='r'>" + eur0.format(r.manual) + "</td><td class='r'>100%</td></tr>";
+
+    document.getElementById("autoLedger").innerHTML =
+      row("Platform","Subscription across " + r.docks + " docks",r.aPlatform,r.auto) +
+      row("Dock amortisation","Capex spread over asset life",r.aAmort,r.auto) +
+      row("Connectivity","Cellular backhaul per dock",r.aConn,r.auto) +
+      row("Partner service","Delivery partner margin, untouched",r.aService,r.auto) +
+      row("Remote supervision", r.operators + " operator" + (r.operators>1?"s":"") + " across the fleet",r.aOps,r.auto) +
+      row("Engineer review","Sign-off on flagged findings",r.aReview,r.auto) +
+      row("Residual manual entry","Inspections that still need a human in the zone",r.aResidual,r.auto) +
+      "<tr class='total'><td>Total</td><td class='r'>" + eur0.format(r.auto) + "</td><td class='r'>100%</td></tr>";
+
+    // scenarios
+    var lowV  = compute({hAccess: val("hAccess")*0.75, loadedCost: val("loadedCost")*0.75});
+    var highV = compute({hAccess: val("hAccess")*1.25, loadedCost: val("loadedCost")*1.25});
+    document.getElementById("scenLow").textContent  = eur0.format(lowV.saving);
+    document.getElementById("scenBase").textContent = eur0.format(r.saving);
+    document.getElementById("scenHigh").textContent = eur0.format(highV.saving);
+
+    drawChart(r);
+    syncURL();
+  }
+
+  function syncURL(){
+    var q = [];
+    IDS.forEach(function(id){ q.push(id + "=" + encodeURIComponent(document.getElementById(id).value)); });
+    try { history.replaceState(null,"","?" + q.join("&")); } catch(e){}
+  }
+
+  function loadURL(){
+    var p = new URLSearchParams(location.search);
+    IDS.forEach(function(id){
+      if (p.has(id)) {
+        var v = parseFloat(p.get(id));
+        if (isFinite(v)) document.getElementById(id).value = v;
+      }
+    });
+    // accept the legacy parameter names from the earlier build
+    var legacy = {area:"points", targetArea:"targetPoints", resources:"stated", salary:"loadedCost", workDays:"fteDays"};
+    Object.keys(legacy).forEach(function(k){
+      if (p.has(k) && !p.has(legacy[k])) {
+        var v = parseFloat(p.get(k));
+        if (isFinite(v)) document.getElementById(legacy[k]).value = v;
+      }
+    });
+  }
+
+  IDS.forEach(function(id){
+    document.getElementById(id).addEventListener("input", render);
+  });
+
+  document.getElementById("reset").addEventListener("click", function(){
+    IDS.forEach(function(id){ document.getElementById(id).value = DEFAULTS[id]; });
+    render();
+  });
+
+  document.getElementById("copy").addEventListener("click", function(){
+    var btn = this;
+    var url = location.href;
+    function done(ok){
+      btn.textContent = ok ? "Link copied" : "Copy failed";
+      setTimeout(function(){ btn.textContent = "Copy scenario link"; }, 1800);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function(){done(true);}, function(){done(false);});
+    } else { done(false); }
+  });
+
+  loadURL();
+  render();
+})();
+</script>
+</body>
+</html>
