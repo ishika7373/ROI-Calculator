@@ -1,11 +1,42 @@
 @import 'tailwindcss';
 
-/* Brand faces, self-hosted so the single-file build opens offline. */
-@import '@fontsource-variable/geist';
-@import '@fontsource-variable/geist-mono';
-@import '@fontsource/lora/latin-400.css';
-@import '@fontsource/lora/latin-400-italic.css';
-@import '@fontsource/lora/latin-500.css';
+/*
+  Brand faces, self-hosted so the single-file build opens offline.
+
+  Declared directly against the latin files rather than importing each package's
+  index, which pulls cyrillic, greek and vietnamese too. The single-file build
+  inlines every one of those as base64, and they are characters this tool never
+  renders. Three faces instead of seventeen.
+*/
+@font-face {
+  font-family: 'Geist Variable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Geist Mono Variable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2')
+    format('woff2-variations');
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@fontsource/lora/files/lora-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@fontsource/lora/files/lora-latin-400-italic.woff2') format('woff2');
+}
 
 /*
   Design tokens taken from flytbase.com.
