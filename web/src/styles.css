@@ -165,15 +165,24 @@ body {
 
 /* ----------------------------------------------------------------- inputs */
 
+/*
+  Fields default to the interface face. Mono is reserved for figures, matching
+  the product site, where it carries stats and labels rather than prose. Numeric
+  inputs opt into it with .field-num so a column of costs still aligns.
+*/
 .field {
   width: 100%;
   background: var(--color-surface-2);
   border: 1px solid var(--color-line);
   border-radius: 4px;
   padding: 0.4375rem 0.625rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.875rem;
   color: var(--color-ink);
+}
+.field-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 .field:focus-visible {
   outline: none;
@@ -266,6 +275,13 @@ thead th {
   padding would loosen a control strip that is deliberately dense on a desktop.
 */
 @media (pointer: coarse) {
+  /* For controls that are not buttons in the visual sense, such as a text link
+     or a plain bordered row, but are still something a thumb has to hit. */
+  .tap-target {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
   .btn,
   .field,
   select.field,

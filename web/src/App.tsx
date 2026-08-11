@@ -591,7 +591,7 @@ export default function App() {
                     setDiscovery(EMPTY);
                     setParams({ ...DEFAULT_PARAMS });
                   }}
-                  className="text-[0.75rem] text-accent underline underline-offset-2"
+                  className="tap-target text-[0.75rem] text-accent underline underline-offset-2"
                 >
                   Clear
                 </button>
@@ -608,7 +608,7 @@ export default function App() {
                   <p className="question">{QUESTIONS[key].question}</p>
                   <input
                     id={key}
-                    className="field"
+                    className="field field-num"
                     inputMode="decimal"
                     value={discovery[key]}
                     placeholder=""
@@ -650,7 +650,7 @@ export default function App() {
                     </div>
                     <input
                       id={f.key}
-                      className="field"
+                      className="field field-num"
                       type="number"
                       step={f.step ?? 1}
                       value={params[f.key]}
@@ -689,7 +689,7 @@ export default function App() {
               <div className="eyebrow text-accent">Saved scenarios</div>
               <button
                 onClick={saveScenario}
-                className="border border-line-soft bg-surface px-3 py-2 text-[0.8125rem] hover:bg-accent-soft text-left"
+                className="tap-target border border-line-soft bg-surface px-3 py-2 text-[0.8125rem] hover:bg-accent-soft text-left"
               >
                 Save current scenario
               </button>

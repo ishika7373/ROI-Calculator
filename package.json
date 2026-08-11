@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Autonomous drone inspection ROI engine — one calculation core, two delivery modes.",
+  "description": "Autonomous drone inspection ROI engine: one calculation core, two delivery modes.",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",

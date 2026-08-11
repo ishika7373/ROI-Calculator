@@ -258,7 +258,7 @@ export function Comparison({ result, params }: { result: ModelResult; params: Pa
           role="img"
           aria-label="Manual versus autonomous annual cost at current and target area"
         >
-          <line x1={padL} y1={plotH + 34} x2={W - padL} y2={plotH + 34} stroke="#CFD8D6" strokeWidth={1} />
+          <line x1={padL} y1={plotH + 34} x2={W - padL} y2={plotH + 34} stroke="var(--color-line)" strokeWidth={1} />
           {pairs.map((pair, i) => {
             const gx = padL + i * groupW;
             const cx = gx + groupW / 2;
@@ -273,8 +273,8 @@ export function Comparison({ result, params }: { result: ModelResult; params: Pa
                 x: x1,
                 total: pair.m.manualCost,
                 segments: [
-                  { v: pair.m.addressableManualCost, fill: '#FBEEDF', stroke: '#B4600F' },
-                  { v: pair.m.nonAddressableManualCost, fill: '#EFEFEC', stroke: '#63767E' },
+                  { v: pair.m.addressableManualCost, fill: 'var(--color-accent-soft)', stroke: 'var(--color-accent)' },
+                  { v: pair.m.nonAddressableManualCost, fill: 'var(--color-line-soft)', stroke: 'var(--color-muted)' },
                 ],
                 label: 'Manual today',
               },
@@ -282,8 +282,8 @@ export function Comparison({ result, params }: { result: ModelResult; params: Pa
                 x: x2,
                 total: pair.m.totalProgrammeCost,
                 segments: [
-                  { v: pair.m.autoCost, fill: '#E4EFE8', stroke: '#2F6B4F' },
-                  { v: pair.m.nonAddressableManualCost, fill: '#EFEFEC', stroke: '#63767E' },
+                  { v: pair.m.autoCost, fill: 'var(--color-good-soft)', stroke: 'var(--color-good)' },
+                  { v: pair.m.nonAddressableManualCost, fill: 'var(--color-line-soft)', stroke: 'var(--color-muted)' },
                 ],
                 label: 'With autonomous',
               },
@@ -317,7 +317,7 @@ export function Comparison({ result, params }: { result: ModelResult; params: Pa
                         textAnchor="middle"
                         fontSize={12.5}
                         fontWeight={600}
-                        fill="#0E1C24"
+                        fill="var(--color-ink)"
                       >
                         {formatCurrency(b.total, params.currency)}
                       </text>
@@ -326,17 +326,17 @@ export function Comparison({ result, params }: { result: ModelResult; params: Pa
                         y={plotH + 50}
                         textAnchor="middle"
                         fontSize={11}
-                        fill="#63767E"
+                        fill="var(--color-muted)"
                       >
                         {b.label}
                       </text>
                     </g>
                   );
                 })}
-                <text x={cx} y={plotH + 68} textAnchor="middle" fontSize={12} fontWeight={600} fill="#0E1C24">
+                <text x={cx} y={plotH + 68} textAnchor="middle" fontSize={12} fontWeight={600} fill="var(--color-ink)">
                   {pair.label}
                 </text>
-                <text x={cx} y={plotH + 84} textAnchor="middle" fontSize={11.5} fill="#2F6B4F">
+                <text x={cx} y={plotH + 84} textAnchor="middle" fontSize={11.5} fill="var(--color-good)">
                   Saving {formatCurrency(pair.m.saving, params.currency)}, programme cost{' '}
                   {formatPercent(pair.m.programmeCostRatio)}
                 </text>
@@ -348,7 +348,7 @@ export function Comparison({ result, params }: { result: ModelResult; params: Pa
 
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[0.8125rem]">
         <div className="border border-line-soft px-4 py-3">
-          <div className="eyebrow text-warn mb-1">Addressable scope</div>
+          <div className="eyebrow text-accent mb-1">Addressable scope</div>
           Only {formatPercent(result.current.addressableShare, 0)} of the inspection programme is
           reachable by aerial inspection. The rest is confined space, thickness readings, tactile
           work, permits and reporting, and it stays on the manual line.
