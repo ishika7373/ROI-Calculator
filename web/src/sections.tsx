@@ -36,10 +36,10 @@ export function Panel({
   detail?: string;
 }) {
   return (
-    <section className="print-section bg-panel hard">
-      <header className="border-b-2 border-shell px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
+    <section className="print-section surface">
+      <header className="border-b border-line px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-baseline gap-3">
-          {eyebrow && <span className="display text-[0.6875rem] text-orange">{eyebrow}</span>}
+          {eyebrow && <span className="eyebrow text-accent">{eyebrow}</span>}
           <h2 className="text-[1rem] font-bold">{title}</h2>
         </div>
         <div className="flex items-center gap-3">
@@ -49,7 +49,7 @@ export function Panel({
               <summary className="btn btn-sm cursor-pointer list-none text-[0.6875rem] px-2 py-1">
                 Why
               </summary>
-              <div className="absolute right-0 top-full mt-2 z-10 w-[34ch] bg-panel hard p-3 text-[0.75rem] leading-relaxed">
+              <div className="absolute right-0 top-full mt-2 z-10 w-[34ch] surface p-3 text-[0.75rem] leading-relaxed">
                 {detail}
               </div>
             </details>
@@ -70,18 +70,18 @@ function Stat({
   label: string;
   value: string;
   sub?: string;
-  tone?: 'ink' | 'green' | 'orange' | 'blue';
+  tone?: 'ink' | 'good' | 'warn' | 'accent';
 }) {
   const toneClass =
-    tone === 'green'
-      ? 'text-green'
-      : tone === 'orange'
-        ? 'text-orange'
-        : tone === 'blue'
-          ? 'text-blue'
+    tone === 'good'
+      ? 'text-good'
+      : tone === 'warn'
+        ? 'text-warn'
+        : tone === 'accent'
+          ? 'text-accent'
           : 'text-ink';
   return (
-    <div className="bg-panel hard-sm px-4 py-3 flex flex-col gap-1.5">
+    <div className="surface px-4 py-3 flex flex-col gap-1.5">
       <div className="eyebrow text-muted">{label}</div>
       <div className={`text-[1.375rem] leading-none font-bold tnum ${toneClass}`}>{value}</div>
       {sub && <div className="text-[0.6875rem] text-muted leading-snug">{sub}</div>}
@@ -91,12 +91,12 @@ function Stat({
 
 export function Incomplete({ result }: { result: ModelResult }) {
   return (
-    <div className="hard-none bg-orange-tint px-5 py-4 flex flex-col gap-2">
-      <div className="eyebrow text-orange">Model incomplete</div>
+    <div className="surface bg-warn-soft px-5 py-4 flex flex-col gap-2">
+      <div className="eyebrow text-warn">Model incomplete</div>
       <ul className="text-[0.875rem] flex flex-col gap-1">
         {result.issues.map((issue, i) => (
           <li key={i} className="flex gap-2">
-            <span aria-hidden className="text-orange select-none">
+            <span aria-hidden className="text-warn select-none">
               &bull;
             </span>
             <span>{issue.reason}</span>
@@ -111,8 +111,8 @@ export function Incomplete({ result }: { result: ModelResult }) {
 function Warnings({ result }: { result: ModelResult }) {
   if (result.warnings.length === 0) return null;
   return (
-    <div className="hard-none bg-yellow-tint px-4 py-3 flex flex-col gap-1 mb-4">
-      <div className="eyebrow text-orange">Check before use</div>
+    <div className="surface bg-warn-soft px-4 py-3 flex flex-col gap-1 mb-4">
+      <div className="eyebrow text-warn">Check before use</div>
       {result.warnings.map((w, i) => (
         <p key={i} className="text-[0.8125rem]">
           {w.message}
@@ -150,53 +150,53 @@ export function ExecutiveSummary({ result, params }: { result: ModelResult; para
 
       <div className="flex flex-wrap items-end gap-x-10 gap-y-5 mb-5">
         <div>
-          <div className="eyebrow text-muted mb-2">Cost ratio, addressable scope</div>
-          <div className="display text-[3.25rem] text-green">{formatPercent(c.costRatio)}</div>
+          <div className="eyebrow eyebrow-mark text-accent mb-2">Cost ratio, addressable scope</div>
+          <div className="display text-ink text-[3.5rem] sm:text-[4rem]">{formatPercent(c.costRatio)}</div>
         </div>
 
-        <div className="flex gap-6 pb-1">
+        <div className="grid grid-cols-3 w-full sm:w-auto border-t sm:border-t-0 border-line pt-4 sm:pt-0">
           <MiniStat label="At target" value={formatPercent(result.target.costRatio)} />
           <MiniStat label="Addressable" value={formatPercent(c.addressableShare, 0)} />
-          <MiniStat label="Programme total" value={formatPercent(c.programmeCostRatio)} />
+          <MiniStat label="Programme" value={formatPercent(c.programmeCostRatio)} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
         <Stat
           label="Annual saving"
           value={formatCurrency(c.saving, params.currency)}
-          tone={c.saving >= 0 ? 'green' : 'orange'}
+          tone={c.saving >= 0 ? 'good' : 'warn'}
         />
         <Stat
           label="Return on spend"
           value={formatReturn(c.returnPct)}
           sub="Excludes implementation"
-          tone={(c.returnPct ?? 0) >= 0 ? 'green' : 'orange'}
+          tone={(c.returnPct ?? 0) >= 0 ? 'good' : 'warn'}
         />
         <Stat
           label="Payback"
           value={c.paybackMonths === null ? 'None' : `${formatMonths(c.paybackMonths)} mo`}
           sub={formatCurrency(c.implCost, params.currency) + ' implementation'}
-          tone={c.paybackMonths === null ? 'orange' : 'ink'}
+          tone={c.paybackMonths === null ? 'warn' : 'ink'}
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Stat
           label="Productive hrs per dock"
           value={formatHours(c.productiveHoursPerDock)}
           sub={`${formatPercent(c.utilisationUsed, 0)} of ${formatHours(c.hoursPerDock)}`}
-          tone="blue"
+          tone="accent"
         />
         <Stat label="Docks" value={formatCount(c.docks)} />
         <Stat label="Operators" value={formatCount(c.operators)} sub={`${c.ratioUsed}:1`} />
       </div>
 
-      <div className="mt-5 pt-4 border-t-2 border-shell flex items-start justify-between gap-4 flex-wrap">
+      <div className="mt-5 pt-4 border-t border-line flex items-start justify-between gap-4 flex-wrap">
         <div className="flex flex-col gap-1">
-          <div className="eyebrow text-blue">Assessment</div>
+          <div className="eyebrow text-accent">Assessment</div>
           <p className="text-[0.9375rem] font-bold">{result.recommendation}</p>
-          {tierNote && <p className="text-[0.75rem] text-orange">{tierNote}</p>}
+          {tierNote && <p className="text-[0.75rem] text-warn">{tierNote}</p>}
         </div>
         <p className="text-[0.625rem] text-muted max-w-[26ch] text-right">
           Rule-derived at these inputs. Not a forecast.
@@ -209,9 +209,9 @@ export function ExecutiveSummary({ result, params }: { result: ModelResult; para
 /** A compact secondary figure, for context beside the hero without a paragraph. */
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 px-3 first:pl-0 last:pr-0 border-l border-line first:border-l-0">
       <div className="eyebrow text-muted">{label}</div>
-      <div className="text-[1.125rem] font-bold tnum">{value}</div>
+      <div className="text-[1.0625rem] tnum text-ink">{value}</div>
     </div>
   );
 }
@@ -347,14 +347,14 @@ export function Comparison({ result, params }: { result: ModelResult; params: Pa
       </div>
 
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[0.8125rem]">
-        <div className="border border-rule px-4 py-3">
-          <div className="eyebrow text-orange mb-1">Addressable scope</div>
+        <div className="border border-line-soft px-4 py-3">
+          <div className="eyebrow text-warn mb-1">Addressable scope</div>
           Only {formatPercent(result.current.addressableShare, 0)} of the inspection programme is
           reachable by aerial inspection. The rest is confined space, thickness readings, tactile
           work, permits and reporting, and it stays on the manual line.
         </div>
-        <div className="border border-rule px-4 py-3">
-          <div className="eyebrow text-green mb-1">Autonomous, sub-linear</div>
+        <div className="border border-line-soft px-4 py-3">
+          <div className="eyebrow text-good mb-1">Autonomous, sub-linear</div>
           Docks go {formatCount(result.current.docks)} → {formatCount(result.target.docks)} and
           operators {formatCount(result.current.operators)} → {formatCount(result.target.operators)},
           so cost scales by only {(result.target.autoCost / result.current.autoCost).toFixed(2)}×.
@@ -408,18 +408,18 @@ export function Audit({ result, params }: { result: ModelResult; params: Params 
       note="Recomputable on paper"
       detail="Every intermediate line with its formula. A customer engineer can reproduce every figure in this model from this table alone, without access to the code."
     >
-      <div className="overflow-x-auto border border-rule">
+      <div className="overflow-x-auto border border-line-soft">
         <table className="w-full text-[0.8125rem] border-collapse">
           <thead>
-            <tr className="bg-blue-tint">
-              <th className="text-left font-semibold px-3 py-2 border-b border-rule whitespace-nowrap">
+            <tr className="bg-accent-soft">
+              <th className="text-left font-semibold px-3 py-2 border-b border-line-soft whitespace-nowrap">
                 Line
               </th>
-              <th className="text-left font-semibold px-3 py-2 border-b border-rule">Formula</th>
-              <th className="text-right font-semibold px-3 py-2 border-b border-rule whitespace-nowrap">
+              <th className="text-left font-semibold px-3 py-2 border-b border-line-soft">Formula</th>
+              <th className="text-right font-semibold px-3 py-2 border-b border-line-soft whitespace-nowrap">
                 Current area
               </th>
-              <th className="text-right font-semibold px-3 py-2 border-b border-rule whitespace-nowrap">
+              <th className="text-right font-semibold px-3 py-2 border-b border-line-soft whitespace-nowrap">
                 Target area
               </th>
             </tr>
@@ -427,14 +427,14 @@ export function Audit({ result, params }: { result: ModelResult; params: Params 
           <tbody>
             {result.audit.map((l) => (
               <tr key={l.key} className="align-top">
-                <td className="px-3 py-1.5 border-b border-rule whitespace-nowrap font-medium">
+                <td className="px-3 py-1.5 border-b border-line-soft whitespace-nowrap font-medium">
                   {l.label}
                 </td>
-                <td className="px-3 py-1.5 border-b border-rule text-muted">{l.formula}</td>
-                <td className="px-3 py-1.5 border-b border-rule text-right tnum whitespace-nowrap">
+                <td className="px-3 py-1.5 border-b border-line-soft text-muted">{l.formula}</td>
+                <td className="px-3 py-1.5 border-b border-line-soft text-right tnum whitespace-nowrap">
                   {render(l.current, l.kind)}
                 </td>
-                <td className="px-3 py-1.5 border-b border-rule text-right tnum whitespace-nowrap">
+                <td className="px-3 py-1.5 border-b border-line-soft text-right tnum whitespace-nowrap">
                   {render(l.target, l.kind)}
                 </td>
               </tr>
@@ -443,8 +443,8 @@ export function Audit({ result, params }: { result: ModelResult; params: Params 
         </table>
       </div>
 
-      <details className="mt-4 border border-rule">
-        <summary className="px-4 py-2 cursor-pointer text-[0.8125rem] font-medium bg-blue-tint">
+      <details className="mt-4 border border-line-soft">
+        <summary className="px-4 py-2 cursor-pointer text-[0.8125rem] font-medium bg-accent-soft">
           Show the working, with this site's own numbers substituted
         </summary>
         <div className="px-4 py-3 flex flex-col gap-2 text-[0.75rem]">
@@ -453,10 +453,10 @@ export function Audit({ result, params }: { result: ModelResult; params: Params 
               <div className="font-medium">{l.label}</div>
               <div className="text-muted">
                 <div>
-                  <span className="text-blue">current</span> {l.currentWorking}
+                  <span className="text-accent">current</span> {l.currentWorking}
                 </div>
                 <div>
-                  <span className="text-blue">target</span> {l.targetWorking}
+                  <span className="text-accent">target</span> {l.targetWorking}
                 </div>
               </div>
             </div>
@@ -484,13 +484,13 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
   // Bands, not a gradient. A reader should be able to say which band a cell is
   // in without consulting a colour scale.
   const band = (m: number | null) => {
-    if (m === null) return { cls: 'bg-orange-tint text-orange', label: 'none' };
-    if (m <= 12) return { cls: 'bg-green-tint text-green font-semibold', label: m.toFixed(0) };
-    if (m <= 24) return { cls: 'bg-green-tint/50 text-ink', label: m.toFixed(0) };
-    if (m <= 48) return { cls: 'bg-panel text-muted', label: m.toFixed(0) };
+    if (m === null) return { cls: 'bg-warn-soft text-warn', label: 'none' };
+    if (m <= 12) return { cls: 'bg-good-soft text-good font-semibold', label: m.toFixed(0) };
+    if (m <= 24) return { cls: 'bg-good-soft/50 text-ink', label: m.toFixed(0) };
+    if (m <= 48) return { cls: 'bg-surface text-muted', label: m.toFixed(0) };
     // Past four years the exact figure is noise: the dock and operator ceilings
     // make it jump around, and no buyer distinguishes 369 months from 608.
-    return { cls: 'bg-orange-tint/60 text-orange', label: '48+' };
+    return { cls: 'bg-warn-soft/60 text-warn', label: '48+' };
   };
 
   return (
@@ -510,17 +510,17 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
           less of the inspection programme being reachable by a drone.
         </p>
 
-        <div className="overflow-x-auto border border-rule">
+        <div className="overflow-x-auto border border-line-soft">
           <table className="w-full text-[0.8125rem] border-collapse">
             <thead>
-              <tr className="bg-blue-tint">
-                <th className="text-left font-semibold px-3 py-2 border-b border-r border-rule whitespace-nowrap">
+              <tr className="bg-accent-soft">
+                <th className="text-left font-semibold px-3 py-2 border-b border-r border-line-soft whitespace-nowrap">
                   Utilisation \ addressable
                 </th>
                 {grid.addressableShares.map((a) => (
                   <th
                     key={a}
-                    className="text-right font-semibold px-3 py-2 border-b border-rule whitespace-nowrap"
+                    className="text-right font-semibold px-3 py-2 border-b border-line-soft whitespace-nowrap"
                   >
                     {pct(a)}
                   </th>
@@ -532,7 +532,7 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
                 <tr key={grid.utilisations[i]}>
                   <th
                     scope="row"
-                    className="text-left font-medium px-3 py-1.5 border-b border-r border-rule whitespace-nowrap bg-blue-tint/40"
+                    className="text-left font-medium px-3 py-1.5 border-b border-r border-line-soft whitespace-nowrap bg-accent-soft/40"
                   >
                     {pct(grid.utilisations[i]!)}
                   </th>
@@ -541,7 +541,7 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
                     return (
                       <td
                         key={cell.addressableShare}
-                        className={`px-3 py-1.5 border-b border-rule text-right tnum ${b.cls} ${
+                        className={`px-3 py-1.5 border-b border-line-soft text-right tnum ${b.cls} ${
                           cell.isCurrent ? 'outline outline-2 outline-ink' : ''
                         }`}
                         title={`${cell.docks} docks, ${cell.operators} operators, cost ratio ${(cell.costRatio * 100).toFixed(0)}%`}
@@ -558,16 +558,16 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
 
         <div className="flex flex-wrap gap-4 mt-3 text-[0.75rem]">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 bg-green-tint border border-green" /> 12 months or less
+            <span className="inline-block w-3 h-3 bg-good-soft border border-good" /> 12 months or less
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 bg-green-tint/50 border border-rule" /> 13 to 24
+            <span className="inline-block w-3 h-3 bg-good-soft/50 border border-line-soft" /> 13 to 24
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 bg-panel border border-rule" /> 25 to 48
+            <span className="inline-block w-3 h-3 bg-surface border border-line-soft" /> 25 to 48
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 bg-orange-tint border border-orange" /> beyond 48, or
+            <span className="inline-block w-3 h-3 bg-warn-soft border border-warn" /> beyond 48, or
             no payback
           </span>
           <span className="flex items-center gap-1.5 text-muted">
@@ -576,8 +576,8 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
         </div>
       </div>
 
-      <div className="border border-blue bg-blue-tint/40 px-4 py-3 mb-5">
-        <div className="eyebrow text-blue mb-1">How wrong can we be</div>
+      <div className="border border-accent bg-accent-soft/40 px-4 py-3 mb-5">
+        <div className="eyebrow text-accent mb-1">How wrong can we be</div>
         {grid.breakEvenUtilisation === null ? (
           <p className="text-[0.875rem] max-w-[80ch]">
             At {pct(result.current.addressableShare)} addressable, no utilisation up to 100% pays
@@ -612,38 +612,38 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
         Only the operator term moves. The dock count is set by addressable hours and productive hours
         per dock, neither of which this ratio touches.
       </p>
-      <div className="overflow-x-auto border border-rule">
+      <div className="overflow-x-auto border border-line-soft">
         <table className="w-full text-[0.8125rem] border-collapse">
           <thead>
-            <tr className="bg-blue-tint">
-              <th className="text-left font-semibold px-3 py-2 border-b border-rule">
+            <tr className="bg-accent-soft">
+              <th className="text-left font-semibold px-3 py-2 border-b border-line-soft">
                 Docks per operator
               </th>
-              <th className="text-right font-semibold px-3 py-2 border-b border-rule">Docks</th>
-              <th className="text-right font-semibold px-3 py-2 border-b border-rule">Operators</th>
-              <th className="text-right font-semibold px-3 py-2 border-b border-rule">
+              <th className="text-right font-semibold px-3 py-2 border-b border-line-soft">Docks</th>
+              <th className="text-right font-semibold px-3 py-2 border-b border-line-soft">Operators</th>
+              <th className="text-right font-semibold px-3 py-2 border-b border-line-soft">
                 Autonomous cost
               </th>
-              <th className="text-right font-semibold px-3 py-2 border-b border-rule">Cost ratio</th>
+              <th className="text-right font-semibold px-3 py-2 border-b border-line-soft">Cost ratio</th>
             </tr>
           </thead>
           <tbody>
             {result.sensitivity.map((row) => {
               const isCurrent = row.ratio === params.ratioNow;
               return (
-                <tr key={row.ratio} className={isCurrent ? 'bg-blue-tint/50' : undefined}>
-                  <td className="px-3 py-1.5 border-b border-rule font-medium">
+                <tr key={row.ratio} className={isCurrent ? 'bg-accent-soft/50' : undefined}>
+                  <td className="px-3 py-1.5 border-b border-line-soft font-medium">
                     {row.ratio}:1
-                    {isCurrent && <span className="text-blue font-normal"> current</span>}
+                    {isCurrent && <span className="text-accent font-normal"> current</span>}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum">{row.docks}</td>
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum">
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum">{row.docks}</td>
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum">
                     {row.operators}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum">
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum">
                     {formatCurrency(row.autoCost, params.currency)}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum">
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum">
                     {formatPercent(row.costRatio)}
                   </td>
                 </tr>
@@ -692,13 +692,13 @@ export function Portfolio({
           label="Manual cost"
           value={formatCurrency(totals.manualCost, currency)}
           sub={`${formatCurrency(totals.addressableManualCost, currency)} of it addressable`}
-          tone="orange"
+          tone="warn"
         />
         <Stat
           label="Autonomous cost"
           value={formatCurrency(totals.autoCost, currency)}
           sub={`${totals.docks} docks, ${totals.operators} operators`}
-          tone="green"
+          tone="good"
         />
         <Stat
           label="Blended cost ratio"
@@ -708,14 +708,14 @@ export function Portfolio({
               ? 'on the addressable scope'
               : `on the addressable scope; total programme ${formatPercent(totals.programmeCostRatio)}`
           }
-          tone="blue"
+          tone="accent"
         />
       </div>
 
-      <div className="overflow-x-auto border border-rule">
+      <div className="overflow-x-auto border border-line-soft">
         <table className="w-full text-[0.8125rem] border-collapse">
           <thead>
-            <tr className="bg-blue-tint">
+            <tr className="bg-accent-soft">
               {[
                 'Customer',
                 'Site',
@@ -731,7 +731,7 @@ export function Portfolio({
               ].map((h, i) => (
                 <th
                   key={h}
-                  className={`font-semibold px-3 py-2 border-b border-rule whitespace-nowrap ${
+                  className={`font-semibold px-3 py-2 border-b border-line-soft whitespace-nowrap ${
                     i >= 2 + passthroughKeys.length && i <= 8 + passthroughKeys.length
                       ? 'text-right'
                       : 'text-left'
@@ -751,58 +751,58 @@ export function Portfolio({
                 <tr
                   key={s.index}
                   onClick={() => onSelect(s.index)}
-                  className={`cursor-pointer hover:bg-blue-tint/40 ${
-                    s.index === selected ? 'bg-blue-tint/60' : ''
+                  className={`cursor-pointer hover:bg-accent-soft/40 ${
+                    s.index === selected ? 'bg-accent-soft/60' : ''
                   }`}
                 >
-                  <td className="px-3 py-1.5 border-b border-rule font-medium whitespace-nowrap">
+                  <td className="px-3 py-1.5 border-b border-line-soft font-medium whitespace-nowrap">
                     {s.customer}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule whitespace-nowrap">{s.site}</td>
+                  <td className="px-3 py-1.5 border-b border-line-soft whitespace-nowrap">{s.site}</td>
                   {passthroughKeys.map((k) => {
                     const v = s.passthrough[k] ?? '';
                     return (
                       <td
                         key={k}
-                        className="px-3 py-1.5 border-b border-rule text-muted max-w-[18ch] truncate"
+                        className="px-3 py-1.5 border-b border-line-soft text-muted max-w-[18ch] truncate"
                         title={v}
                       >
                         {v}
                       </td>
                     );
                   })}
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum whitespace-nowrap">
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum whitespace-nowrap">
                     {c ? formatCurrency(c.manualCost, currency) : blank}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum whitespace-nowrap">
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum whitespace-nowrap">
                     {c ? formatCurrency(c.autoCost, currency) : blank}
                   </td>
                   <td
-                    className={`px-3 py-1.5 border-b border-rule text-right tnum whitespace-nowrap ${
-                      c && c.saving < 0 ? 'text-orange' : ''
+                    className={`px-3 py-1.5 border-b border-line-soft text-right tnum whitespace-nowrap ${
+                      c && c.saving < 0 ? 'text-warn' : ''
                     }`}
                   >
                     {c ? formatCurrency(c.saving, currency) : blank}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum">
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum">
                     {c ? formatPercent(c.costRatio) : blank}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum">
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum">
                     {s.result.status === 'ok' ? formatPercent(s.result.target.costRatio) : blank}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum whitespace-nowrap">
-                    {c ? (c.paybackMonths === null ? <span className="text-orange">none</span> : formatMonths(c.paybackMonths)) : blank}
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum whitespace-nowrap">
+                    {c ? (c.paybackMonths === null ? <span className="text-warn">none</span> : formatMonths(c.paybackMonths)) : blank}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule text-right tnum">
+                  <td className="px-3 py-1.5 border-b border-line-soft text-right tnum">
                     {c ? c.docks : blank}
                   </td>
-                  <td className="px-3 py-1.5 border-b border-rule whitespace-nowrap">
+                  <td className="px-3 py-1.5 border-b border-line-soft whitespace-nowrap">
                     {!okRow ? (
-                      <span className="text-orange">model incomplete</span>
+                      <span className="text-warn">model incomplete</span>
                     ) : s.result.tierImprovesAtTarget ? (
-                      <span className="text-green">tier improves at target</span>
+                      <span className="text-good">tier improves at target</span>
                     ) : s.result.tierWeakensAtTarget ? (
-                      <span className="text-orange">tier weakens at target</span>
+                      <span className="text-warn">tier weakens at target</span>
                     ) : (
                       <span className="text-muted">calculated</span>
                     )}
@@ -858,8 +858,8 @@ export function Exceptions({ scored }: { scored: ScoredSite[] }) {
         title="Exceptions"
         note="Not priced, or priced with a caution"
       >
-        <div className="border border-green bg-green-tint px-5 py-4 flex flex-col gap-1">
-          <div className="eyebrow text-green">Nothing to report</div>
+        <div className="border border-good bg-good-soft px-5 py-4 flex flex-col gap-1">
+          <div className="eyebrow text-good">Nothing to report</div>
           <p className="text-[0.9375rem]">
             All {scored.length} row{scored.length === 1 ? '' : 's'} priced cleanly. No missing
             fields, no unusable values, and no implausible scale factors.
@@ -879,27 +879,27 @@ export function Exceptions({ scored }: { scored: ScoredSite[] }) {
       title="Exceptions"
       note={`${invalid} row${invalid === 1 ? '' : 's'} not priced, ${warned} priced with a caution.`}
     >
-      <div className="overflow-x-auto border border-rule">
+      <div className="overflow-x-auto border border-line-soft">
         <table className="w-full text-[0.8125rem] border-collapse">
           <thead>
-            <tr className="bg-blue-tint">
-              <th className="text-left font-semibold px-3 py-2 border-b border-rule">Customer</th>
-              <th className="text-left font-semibold px-3 py-2 border-b border-rule">Site</th>
-              <th className="text-left font-semibold px-3 py-2 border-b border-rule">Kind</th>
-              <th className="text-left font-semibold px-3 py-2 border-b border-rule">Reason</th>
+            <tr className="bg-accent-soft">
+              <th className="text-left font-semibold px-3 py-2 border-b border-line-soft">Customer</th>
+              <th className="text-left font-semibold px-3 py-2 border-b border-line-soft">Site</th>
+              <th className="text-left font-semibold px-3 py-2 border-b border-line-soft">Kind</th>
+              <th className="text-left font-semibold px-3 py-2 border-b border-line-soft">Reason</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
               <tr key={i}>
-                <td className="px-3 py-1.5 border-b border-rule whitespace-nowrap font-medium">
+                <td className="px-3 py-1.5 border-b border-line-soft whitespace-nowrap font-medium">
                   {r.s.customer}
                 </td>
-                <td className="px-3 py-1.5 border-b border-rule whitespace-nowrap">{r.s.site}</td>
-                <td className="px-3 py-1.5 border-b border-rule whitespace-nowrap">
-                  <span className={r.kind === 'invalid' ? 'text-orange' : 'text-blue'}>{r.kind}</span>
+                <td className="px-3 py-1.5 border-b border-line-soft whitespace-nowrap">{r.s.site}</td>
+                <td className="px-3 py-1.5 border-b border-line-soft whitespace-nowrap">
+                  <span className={r.kind === 'invalid' ? 'text-warn' : 'text-accent'}>{r.kind}</span>
                 </td>
-                <td className="px-3 py-1.5 border-b border-rule">{r.text}</td>
+                <td className="px-3 py-1.5 border-b border-line-soft">{r.text}</td>
               </tr>
             ))}
           </tbody>
@@ -919,25 +919,25 @@ export function ParamSources({ site }: { site: ScoredSite }) {
       note="Provenance of every parameter"
       detail="Resolution order: per-row override, then the Parameters sheet, then the built-in default. A tier that supplies an invalid value is recorded as rejected rather than skipped silently."
     >
-      <div className="overflow-x-auto border border-rule">
+      <div className="overflow-x-auto border border-line-soft">
         <table className="w-full text-[0.8125rem] border-collapse">
           <thead>
-            <tr className="bg-blue-tint">
-              <th className="text-left font-semibold px-3 py-2 border-b border-rule">Parameter</th>
-              <th className="text-right font-semibold px-3 py-2 border-b border-rule">Value</th>
-              <th className="text-left font-semibold px-3 py-2 border-b border-rule">Source</th>
+            <tr className="bg-accent-soft">
+              <th className="text-left font-semibold px-3 py-2 border-b border-line-soft">Parameter</th>
+              <th className="text-right font-semibold px-3 py-2 border-b border-line-soft">Value</th>
+              <th className="text-left font-semibold px-3 py-2 border-b border-line-soft">Source</th>
             </tr>
           </thead>
           <tbody>
             {Object.entries(site.resolution).map(([key, r]) => (
               <tr key={key}>
-                <td className="px-3 py-1.5 border-b border-rule font-medium">{key}</td>
-                <td className="px-3 py-1.5 border-b border-rule text-right tnum">{String(r.value)}</td>
-                <td className="px-3 py-1.5 border-b border-rule">
+                <td className="px-3 py-1.5 border-b border-line-soft font-medium">{key}</td>
+                <td className="px-3 py-1.5 border-b border-line-soft text-right tnum">{String(r.value)}</td>
+                <td className="px-3 py-1.5 border-b border-line-soft">
                   <span
                     className={
                       r.source === 'row override'
-                        ? 'text-blue font-medium'
+                        ? 'text-accent font-medium'
                         : r.source === 'Parameters sheet'
                           ? 'text-ink'
                           : 'text-muted'
@@ -945,7 +945,7 @@ export function ParamSources({ site }: { site: ScoredSite }) {
                   >
                     {r.source}
                   </span>
-                  {r.rejected && <span className="text-orange"> · {r.rejected}</span>}
+                  {r.rejected && <span className="text-warn"> · {r.rejected}</span>}
                 </td>
               </tr>
             ))}

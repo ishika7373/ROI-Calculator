@@ -195,6 +195,8 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const exportMenu = useRef<HTMLDivElement>(null);
+  /** Which pane is showing below the lg breakpoint. Ignored at lg and above. */
+  const [pane, setPane] = useState<'results' | 'inputs'>('results');
   const fileInput = useRef<HTMLInputElement>(null);
   const initialised = useRef(false);
 
@@ -252,7 +254,7 @@ export default function App() {
     const s = scored[index];
     if (!s) return;
     setSelectedSite(index);
-    // Values come from the header matcher, not from hardcoded column names, so
+    // Values come from the header matcher, not from surfacecoded column names, so
     // a workbook that spells its columns differently still loads correctly.
     setDiscovery({ ...s.discovery });
     setParams({ ...s.params });
@@ -452,35 +454,37 @@ export default function App() {
       }}
     >
       {/* ------------------------------------------------------- header */}
-      <header className="no-print border-b-2 border-shell bg-panel sticky top-0 z-20">
-        <div className="px-5 py-3 flex items-center justify-between gap-4 flex-wrap max-w-full">
-          <div className="flex items-center gap-3">
-            <span className="display text-[0.875rem] text-orange" aria-hidden>
-              &#9670;
-            </span>
-            <div>
-              <div className="eyebrow text-blue">Discovery model</div>
-              <h1 className="text-[1rem] font-bold">Autonomous Inspection ROI</h1>
-            </div>
+      <header className="no-print border-b border-line bg-surface sticky top-0 z-20">
+        {/*
+          A grid below lg so the site selector can take its own row without
+          widening its siblings: as a full-width flex item it forced the whole
+          control cluster to 335px, which pushed the header to three rows.
+        */}
+        <div className="relative px-5 py-3 grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 lg:flex lg:justify-between lg:gap-4 max-w-full">
+          <div className="min-w-0">
+            <div className="eyebrow eyebrow-mark text-accent">Discovery model</div>
+            <h1 className="text-[1rem] font-semibold text-ink mt-0.5 truncate">
+              Autonomous Inspection ROI
+            </h1>
           </div>
 
-          <div className="relative flex items-center gap-2 flex-wrap w-full min-w-0 lg:w-auto">
-            <select
-              className="field w-full min-w-0 lg:w-auto lg:max-w-[16rem] text-[0.8125rem]"
+          <select
+            className="field order-3 col-span-2 w-full lg:order-2 lg:col-auto lg:w-auto lg:max-w-[16rem] text-[0.8125rem]"
               value={selectedSite}
               onChange={(e) => loadSite(Number(e.target.value))}
               aria-label="Load a site from the portfolio"
             >
-              {scored.map((s) => (
-                <option key={s.index} value={s.index}>
-                  {s.customer} / {s.site}
-                </option>
-              ))}
-            </select>
+            {scored.map((s) => (
+              <option key={s.index} value={s.index}>
+                {s.customer} / {s.site}
+              </option>
+            ))}
+          </select>
 
+          <div className="relative flex items-center gap-2 justify-self-end order-2 lg:order-3">
             <button
               onClick={() => setDocumentView((v) => !v)}
-              className={`btn ${documentView ? 'btn-on' : ''}`}
+              className={`btn max-lg:hidden ${documentView ? 'btn-on' : ''}`}
             >
               {documentView ? 'Section view' : 'Document view'}
             </button>
@@ -491,7 +495,7 @@ export default function App() {
               produces a file sits in the menu beside it.
             */}
             <div className="flex">
-              <button onClick={() => window.print()} className="btn border-r-0">
+              <button onClick={() => window.print()} className="btn max-lg:hidden border-r-0">
                 Print / PDF
               </button>
               <div className="relative max-sm:static" ref={exportMenu}>
@@ -506,8 +510,19 @@ export default function App() {
                 {exportOpen && (
                   <div
                     role="menu"
-                    className="absolute top-full mt-2 z-30 bg-panel hard py-1 right-0 w-[15rem] max-sm:left-0 max-sm:right-0 max-sm:w-auto"
+                    className="absolute top-full mt-2 z-30 surface py-1 right-0 w-[15rem] max-sm:left-0 max-sm:right-0 max-sm:w-auto"
                   >
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        setExportOpen(false);
+                        window.print();
+                      }}
+                      className="lg:hidden w-full text-left px-3 py-2 text-[0.8125rem] hover:bg-accent-soft flex flex-col gap-0.5 border-b border-line"
+                    >
+                      <span className="font-semibold text-ink">Print / PDF</span>
+                      <span className="text-[0.6875rem] text-muted">One page, audit table intact</span>
+                    </button>
                     {EXPORTS.map((e) => (
                       <button
                         key={e.label}
@@ -516,7 +531,7 @@ export default function App() {
                           setExportOpen(false);
                           void e.run();
                         }}
-                        className="w-full text-left px-3 py-2 text-[0.8125rem] hover:bg-yellow-tint flex flex-col gap-0.5"
+                        className="w-full text-left px-3 py-2 text-[0.8125rem] hover:bg-accent-soft flex flex-col gap-0.5"
                       >
                         <span className="font-bold">{e.label}</span>
                         <span className="text-[0.6875rem] text-muted">{e.hint}</span>
@@ -531,14 +546,44 @@ export default function App() {
       </header>
 
       {/* --------------------------------------------------------- body */}
+      {/*
+        Below lg the two panes stack, which put the results roughly three
+        screens below the fold. On small screens they become tabs instead, and
+        the results are the default: the numbers are what the meeting is about,
+        and the inputs are one tap away rather than a scroll away.
+      */}
+      <div className="no-print lg:hidden sticky top-[57px] z-10 flex border-b border-line bg-ground">
+        {(
+          [
+            ['results', 'Results'],
+            ['inputs', 'Inputs'],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setPane(id)}
+            aria-pressed={pane === id}
+            className={`flex-1 py-3 text-[0.8125rem] font-bold border-r border-line last:border-r-0 ${
+              pane === id ? 'bg-accent text-white' : 'bg-surface'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[360px_1fr] min-h-0">
         {/* left rail */}
-        <aside className="no-print border-r-2 border-shell overflow-y-auto thin-scroll lg:max-h-[calc(100vh-61px)]">
+        <aside
+          className={`no-print border-r border-line overflow-y-auto thin-scroll lg:max-h-[calc(100vh-61px)] ${
+            pane === 'inputs' ? '' : 'max-lg:hidden'
+          }`}
+        >
           <div className="p-5 flex flex-col gap-6">
             <div className="flex flex-col gap-3">
               <div className="flex items-baseline justify-between">
                 <div>
-                  <div className="eyebrow text-blue">Discovery</div>
+                  <div className="eyebrow text-accent">Discovery</div>
                   <p className="text-[0.75rem] text-muted mt-0.5">The customer supplies these.</p>
                 </div>
                 <button
@@ -546,7 +591,7 @@ export default function App() {
                     setDiscovery(EMPTY);
                     setParams({ ...DEFAULT_PARAMS });
                   }}
-                  className="text-[0.75rem] text-blue underline underline-offset-2"
+                  className="text-[0.75rem] text-accent underline underline-offset-2"
                 >
                   Clear
                 </button>
@@ -574,9 +619,9 @@ export default function App() {
             </div>
 
             {/* autonomous side, visually separated */}
-            <div className="bg-blue-tint hard">
-              <div className="px-4 py-3 border-b-2 border-shell">
-                <div className="eyebrow text-blue">Supplied by us</div>
+            <div className="bg-accent-soft surface">
+              <div className="px-4 py-3 border-b border-line">
+                <div className="eyebrow text-accent">Supplied by us</div>
                 <p className="text-[0.75rem] text-muted mt-1">
                   Placeholders, not commercial figures. Replace before customer use.
                 </p>
@@ -592,12 +637,12 @@ export default function App() {
                       {f.help && (
                         <details className="relative shrink-0">
                           <summary
-                            className="cursor-pointer list-none text-[0.625rem] font-bold text-blue border-2 border-blue px-1 leading-tight"
+                            className="cursor-pointer list-none text-[0.625rem] font-bold text-accent border-2 border-accent px-1 leading-tight"
                             aria-label={`Why this value for ${f.label}`}
                           >
                             ?
                           </summary>
-                          <div className="absolute right-0 top-full mt-1 z-20 w-[30ch] bg-panel hard p-2.5 text-[0.6875rem] leading-relaxed font-normal">
+                          <div className="absolute right-0 top-full mt-1 z-20 w-[30ch] surface p-2.5 text-[0.6875rem] leading-relaxed font-normal">
                             {f.help}
                           </div>
                         </details>
@@ -641,10 +686,10 @@ export default function App() {
 
             {/* saved scenarios */}
             <div className="flex flex-col gap-2">
-              <div className="eyebrow text-blue">Saved scenarios</div>
+              <div className="eyebrow text-accent">Saved scenarios</div>
               <button
                 onClick={saveScenario}
-                className="border border-rule bg-panel px-3 py-2 text-[0.8125rem] hover:bg-blue-tint text-left"
+                className="border border-line-soft bg-surface px-3 py-2 text-[0.8125rem] hover:bg-accent-soft text-left"
               >
                 Save current scenario
               </button>
@@ -683,7 +728,7 @@ export default function App() {
 
             {/* batch upload */}
             <div className="flex flex-col gap-2">
-              <div className="eyebrow text-blue">Batch workbook</div>
+              <div className="eyebrow text-accent">Batch workbook</div>
 
               <input
                 ref={fileInput}
@@ -702,10 +747,10 @@ export default function App() {
                 onClick={() => fileInput.current?.click()}
                 className={`w-full border border-dashed px-4 py-6 text-center transition-colors ${
                   dragging
-                    ? 'border-blue bg-blue-tint'
+                    ? 'border-accent bg-accent-soft'
                     : uploadError
-                      ? 'border-orange bg-orange-tint'
-                      : 'border-rule bg-panel hover:bg-blue-tint/40'
+                      ? 'border-warn bg-warn-soft'
+                      : 'border-line-soft bg-surface hover:bg-accent-soft/40'
                 } ${busy ? 'opacity-60' : ''}`}
               >
                 <span className="block text-[0.875rem] font-medium">
@@ -717,8 +762,8 @@ export default function App() {
               </button>
 
               {uploadError && (
-                <div className="border border-orange bg-orange-tint px-3 py-2">
-                  <div className="eyebrow text-orange mb-1">Could not read that file</div>
+                <div className="border border-warn bg-warn-soft px-3 py-2">
+                  <div className="eyebrow text-warn mb-1">Could not read that file</div>
                   <p className="text-[0.75rem] whitespace-pre-wrap">{uploadError}</p>
                 </div>
               )}
@@ -731,7 +776,7 @@ export default function App() {
                 {sourceName !== 'Bundled sample portfolio' && (
                   <button
                     onClick={resetPortfolio}
-                    className="text-blue underline underline-offset-2 shrink-0"
+                    className="text-accent underline underline-offset-2 shrink-0"
                   >
                     Reset
                   </button>
@@ -742,12 +787,16 @@ export default function App() {
         </aside>
 
         {/* canvas */}
-        <main className="overflow-y-auto thin-scroll lg:max-h-[calc(100vh-61px)] print-stack">
+        <main
+          className={`overflow-y-auto thin-scroll lg:max-h-[calc(100vh-61px)] print-stack ${
+            pane === 'results' ? '' : 'max-lg:hidden'
+          }`}
+        >
           <div className="p-5 flex flex-col gap-4 print-compact">{canvas}</div>
 
           {/* section navigator */}
           {!documentView && (
-            <nav className="no-print sticky bottom-0 bg-paper border-t-2 border-shell px-5 py-3 flex gap-2 overflow-x-auto">
+            <nav className="no-print sticky bottom-0 bg-ground border-t border-line px-5 py-3 flex gap-2 overflow-x-auto">
               {SECTIONS.map((s) => (
                 <button
                   key={s.id}
@@ -756,7 +805,7 @@ export default function App() {
                     section === s.id ? 'btn-on' : ''
                   }`}
                 >
-                  <div className="display text-[0.5rem] opacity-70">{s.n}</div>
+                  <div className="eyebrow text-muted">{s.n}</div>
                   <div className="text-[0.75rem] font-bold mt-1">{s.label}</div>
                 </button>
               ))}
@@ -771,18 +820,18 @@ export default function App() {
         but as one scannable line. The full statement sits one click away rather
         than as a paragraph nobody reads in a live meeting.
       */}
-      <footer className="no-print border-t-2 border-shell bg-panel px-5 py-2.5">
+      <footer className="no-print border-t border-line bg-surface px-5 py-2.5">
         <details className="group">
           <summary className="flex items-center gap-2 cursor-pointer list-none text-[0.6875rem]">
-            <span className="eyebrow text-orange">Scope</span>
+            <span className="eyebrow text-warn">Scope</span>
             <span className="text-muted">
               Labour displacement only. Defaults are placeholders.
             </span>
-            <span className="text-blue underline underline-offset-2 ml-auto shrink-0">
+            <span className="text-accent underline underline-offset-2 ml-auto shrink-0">
               Full statement
             </span>
           </summary>
-          <div className="mt-2 pt-2 border-t border-rule grid gap-2 sm:grid-cols-3 text-[0.6875rem] text-muted leading-relaxed">
+          <div className="mt-2 pt-2 border-t border-line-soft grid gap-2 sm:grid-cols-3 text-[0.6875rem] text-muted leading-relaxed">
             <p>
               <span className="font-bold text-ink">Excluded value pools.</span> Avoided scaffolding
               and rope access, avoided shutdown windows, compliance penalty exposure, unplanned
@@ -804,7 +853,7 @@ export default function App() {
       </footer>
 
       {dragging && (
-        <div className="fixed inset-0 z-30 bg-blue-tint/90 border-4 border-blue flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-30 bg-accent-soft/90 border-4 border-accent flex items-center justify-center pointer-events-none">
           <p className="text-[1.125rem] font-semibold">Drop the workbook to score it</p>
         </div>
       )}
@@ -812,7 +861,7 @@ export default function App() {
       {toast && (
         <div
           role="status"
-          className="no-print fixed bottom-5 right-5 z-40 border border-ink bg-panel px-4 py-3 text-[0.8125rem]"
+          className="no-print fixed bottom-5 right-5 z-40 border border-ink bg-surface px-4 py-3 text-[0.8125rem]"
         >
           {toast}
         </div>
@@ -829,9 +878,9 @@ function CompareTable({ a, b }: { a: SavedScenario; b: SavedScenario }) {
 
   const line = (label: string, fa: string, fb: string) => (
     <tr key={label}>
-      <td className="px-2 py-1 border-b border-rule text-muted">{label}</td>
-      <td className="px-2 py-1 border-b border-rule text-right tnum">{fa}</td>
-      <td className="px-2 py-1 border-b border-rule text-right tnum">{fb}</td>
+      <td className="px-2 py-1 border-b border-line-soft text-muted">{label}</td>
+      <td className="px-2 py-1 border-b border-line-soft text-right tnum">{fa}</td>
+      <td className="px-2 py-1 border-b border-line-soft text-right tnum">{fb}</td>
     </tr>
   );
 
@@ -843,13 +892,13 @@ function CompareTable({ a, b }: { a: SavedScenario; b: SavedScenario }) {
     r.status === 'ok' ? String(r.current[k]) : '';
 
   return (
-    <div className="border border-rule bg-panel overflow-x-auto">
+    <div className="border border-line-soft bg-surface overflow-x-auto">
       <table className="w-full text-[0.75rem] border-collapse">
         <thead>
-          <tr className="bg-blue-tint">
-            <th className="text-left px-2 py-1.5 border-b border-rule font-semibold">Line</th>
-            <th className="text-right px-2 py-1.5 border-b border-rule font-semibold">{a.name}</th>
-            <th className="text-right px-2 py-1.5 border-b border-rule font-semibold">{b.name}</th>
+          <tr className="bg-accent-soft">
+            <th className="text-left px-2 py-1.5 border-b border-line-soft font-semibold">Line</th>
+            <th className="text-right px-2 py-1.5 border-b border-line-soft font-semibold">{a.name}</th>
+            <th className="text-right px-2 py-1.5 border-b border-line-soft font-semibold">{b.name}</th>
           </tr>
         </thead>
         <tbody>
