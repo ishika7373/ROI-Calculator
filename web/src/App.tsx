@@ -193,6 +193,8 @@ export default function App() {
   const [dragging, setDragging] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const exportMenu = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const initialised = useRef(false);
 
@@ -227,6 +229,24 @@ export default function App() {
     const t = setTimeout(() => setToast(null), 2600);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // Dismiss the export menu on an outside click or Escape, so it never strands
+  // itself open over the numbers during a call.
+  useEffect(() => {
+    if (!exportOpen) return;
+    const onPointer = (e: MouseEvent) => {
+      if (!exportMenu.current?.contains(e.target as Node)) setExportOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExportOpen(false);
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [exportOpen]);
 
   function loadSite(index: number) {
     const s = scored[index];
@@ -296,6 +316,14 @@ export default function App() {
       setToast(`Workbook failed: ${(err as Error).message}`);
     }
   }
+
+  /** Everything that produces a file, in the order it is usually wanted. */
+  const EXPORTS: { label: string; hint: string; run: () => void | Promise<void> }[] = [
+    { label: 'Workbook (.xlsx)', hint: 'All sheets, native charts', run: exportWorkbook },
+    { label: 'Scenario CSV', hint: 'This site, with audit trail', run: exportScenarioCsv },
+    { label: 'Portfolio CSV', hint: `All ${scored.length} sites, one row each`, run: exportPortfolioCsv },
+    { label: 'Exceptions CSV', hint: 'Rows not priced, with reasons', run: exportExceptionsCsv },
+  ];
 
   /* ---------------------------------------------------------- scenarios */
 
@@ -436,7 +464,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap w-full min-w-0 lg:w-auto">
+          <div className="relative flex items-center gap-2 flex-wrap w-full min-w-0 lg:w-auto">
             <select
               className="field w-full min-w-0 lg:w-auto lg:max-w-[16rem] text-[0.8125rem]"
               value={selectedSite}
@@ -457,22 +485,46 @@ export default function App() {
               {documentView ? 'Section view' : 'Document view'}
             </button>
 
-            <div className="flex hard-sm overflow-x-auto max-w-full divide-x-2 divide-shell">
-              <button onClick={exportScenarioCsv} className="btn border-r-0 shadow-none">
-                Scenario CSV
-              </button>
-              <button onClick={exportPortfolioCsv} className="btn border-r-0 shadow-none">
-                Portfolio CSV
-              </button>
-              <button onClick={exportExceptionsCsv} className="btn border-r-0 shadow-none">
-                Exceptions
-              </button>
-              <button onClick={exportWorkbook} className="btn btn-primary border-r-0 shadow-none">
-                Workbook
-              </button>
-              <button onClick={() => window.print()} className="btn shadow-none">
+            {/*
+              One control rather than five. Print is the action reached most
+              often in a live call, so it stays a button; everything that
+              produces a file sits in the menu beside it.
+            */}
+            <div className="flex">
+              <button onClick={() => window.print()} className="btn border-r-0">
                 Print / PDF
               </button>
+              <div className="relative max-sm:static" ref={exportMenu}>
+                <button
+                  onClick={() => setExportOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={exportOpen}
+                  className={`btn px-2 ${exportOpen ? 'btn-on' : ''}`}
+                >
+                  Export <span aria-hidden>&#9662;</span>
+                </button>
+                {exportOpen && (
+                  <div
+                    role="menu"
+                    className="absolute top-full mt-2 z-30 bg-panel hard py-1 right-0 w-[15rem] max-sm:left-0 max-sm:right-0 max-sm:w-auto"
+                  >
+                    {EXPORTS.map((e) => (
+                      <button
+                        key={e.label}
+                        role="menuitem"
+                        onClick={() => {
+                          setExportOpen(false);
+                          void e.run();
+                        }}
+                        className="w-full text-left px-3 py-2 text-[0.8125rem] hover:bg-yellow-tint flex flex-col gap-0.5"
+                      >
+                        <span className="font-bold">{e.label}</span>
+                        <span className="text-[0.6875rem] text-muted">{e.hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
