@@ -490,7 +490,7 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
     if (m <= 48) return { cls: 'bg-surface text-muted', label: m.toFixed(0) };
     // Past four years the exact figure is noise: the dock and operator ceilings
     // make it jump around, and no buyer distinguishes 369 months from 608.
-    return { cls: 'bg-warn-soft/60 text-warn', label: '48+' };
+    return { cls: 'bg-warn-soft text-warn', label: '48+' };
   };
 
   return (
@@ -556,22 +556,38 @@ export function Sensitivity({ result, params }: { result: ModelResult; params: P
           </table>
         </div>
 
-        <div className="flex flex-wrap gap-4 mt-3 text-[0.75rem]">
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 bg-good-soft border border-good" /> 12 months or less
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 bg-good-soft/50 border border-line-soft" /> 13 to 24
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 bg-surface border border-line-soft" /> 25 to 48
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 bg-warn-soft border border-warn" /> beyond 48, or
-            no payback
-          </span>
-          <span className="flex items-center gap-1.5 text-muted">
-            <span className="inline-block w-3 h-3 border-2 border-ink" /> the scenario on screen
+        {/*
+          Each key is a real cell, rendered through the same band() the table
+          uses, so the legend cannot drift from the grid. The previous version
+          used plain swatches, and the two middle bands resolved to #1a2422 and
+          #242424 with identical borders: indistinguishable at 12px, which made
+          the legend unreadable rather than merely subtle.
+        */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3 text-[0.75rem]">
+          <span className="eyebrow text-muted">Payback, months</span>
+          {[
+            { sample: 8, text: '12 or less' },
+            { sample: 18, text: '13 to 24' },
+            { sample: 36, text: '25 to 48' },
+            { sample: null, text: 'over 48, or never' },
+          ].map((k) => {
+            const b = band(k.sample);
+            return (
+              <span key={k.text} className="flex items-center gap-2">
+                <span
+                  className={`inline-block min-w-[2.5rem] text-center px-1.5 py-0.5 tnum text-[0.6875rem] border border-line-soft ${b.cls}`}
+                >
+                  {b.label}
+                </span>
+                {k.text}
+              </span>
+            );
+          })}
+          <span className="flex items-center gap-2 text-muted">
+            <span className="inline-block min-w-[2.5rem] text-center px-1.5 py-0.5 text-[0.6875rem] outline outline-2 outline-ink border border-line-soft">
+              &nbsp;
+            </span>
+            your inputs
           </span>
         </div>
       </div>

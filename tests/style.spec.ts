@@ -10,6 +10,12 @@ import { describe, expect, it } from 'vitest';
  * regenerated from source rather than edited.
  */
 
+/*
+ * Built from its code point rather than written literally, because this file is
+ * tracked too and a literal would make the guard fail on itself.
+ */
+const EM_DASH = String.fromCharCode(0x2014);
+
 const tracked = execSync('git ls-files', { encoding: 'utf8' })
   .split('\n')
   .filter((f) => /\.(ts|tsx|css|md|json|html)$/.test(f))
@@ -25,7 +31,7 @@ describe('house style', () => {
     for (const file of tracked) {
       const lines = readFileSync(file, 'utf8').split('\n');
       lines.forEach((line, i) => {
-        if (line.includes('—')) offenders.push(`${file}:${i + 1}  ${line.trim().slice(0, 70)}`);
+        if (line.includes(EM_DASH)) offenders.push(`${file}:${i + 1}  ${line.trim().slice(0, 70)}`);
       });
     }
     expect(offenders, `em dashes found:\n${offenders.join('\n')}`).toEqual([]);
