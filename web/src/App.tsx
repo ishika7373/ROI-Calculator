@@ -424,13 +424,16 @@ export default function App() {
       }}
     >
       {/* ------------------------------------------------------- header */}
-      <header className="no-print border-b border-rule bg-panel sticky top-0 z-20">
+      <header className="no-print border-b-2 border-shell bg-panel sticky top-0 z-20">
         <div className="px-5 py-3 flex items-center justify-between gap-4 flex-wrap max-w-full">
-          <div>
-            <div className="eyebrow text-steel">Discovery model</div>
-            <h1 className="text-[1.125rem] font-semibold tracking-tight">
-              Autonomous Inspection ROI
-            </h1>
+          <div className="flex items-center gap-3">
+            <span className="display text-[0.875rem] text-orange" aria-hidden>
+              &#9670;
+            </span>
+            <div>
+              <div className="eyebrow text-blue">Discovery model</div>
+              <h1 className="text-[1rem] font-bold">Autonomous Inspection ROI</h1>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap w-full min-w-0 lg:w-auto">
@@ -449,27 +452,25 @@ export default function App() {
 
             <button
               onClick={() => setDocumentView((v) => !v)}
-              className={`px-3 py-2 text-[0.8125rem] border ${
-                documentView ? 'border-steel bg-steel-tint text-ink' : 'border-rule bg-panel'
-              }`}
+              className={`btn ${documentView ? 'btn-on' : ''}`}
             >
               {documentView ? 'Section view' : 'Document view'}
             </button>
 
-            <div className="flex border border-rule overflow-x-auto max-w-full">
-              <button onClick={exportScenarioCsv} className="px-3 py-2 text-[0.8125rem] border-r border-rule bg-panel hover:bg-steel-tint whitespace-nowrap">
+            <div className="flex hard-sm overflow-x-auto max-w-full divide-x-2 divide-shell">
+              <button onClick={exportScenarioCsv} className="btn border-r-0 shadow-none">
                 Scenario CSV
               </button>
-              <button onClick={exportPortfolioCsv} className="px-3 py-2 text-[0.8125rem] border-r border-rule bg-panel hover:bg-steel-tint whitespace-nowrap">
+              <button onClick={exportPortfolioCsv} className="btn border-r-0 shadow-none">
                 Portfolio CSV
               </button>
-              <button onClick={exportExceptionsCsv} className="px-3 py-2 text-[0.8125rem] border-r border-rule bg-panel hover:bg-steel-tint whitespace-nowrap">
+              <button onClick={exportExceptionsCsv} className="btn border-r-0 shadow-none">
                 Exceptions
               </button>
-              <button onClick={exportWorkbook} className="px-3 py-2 text-[0.8125rem] border-r border-rule bg-panel hover:bg-steel-tint font-medium whitespace-nowrap">
+              <button onClick={exportWorkbook} className="btn btn-primary border-r-0 shadow-none">
                 Workbook
               </button>
-              <button onClick={() => window.print()} className="px-3 py-2 text-[0.8125rem] bg-panel hover:bg-steel-tint whitespace-nowrap">
+              <button onClick={() => window.print()} className="btn shadow-none">
                 Print / PDF
               </button>
             </div>
@@ -480,12 +481,12 @@ export default function App() {
       {/* --------------------------------------------------------- body */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[360px_1fr] min-h-0">
         {/* left rail */}
-        <aside className="no-print border-r border-rule bg-paper overflow-y-auto thin-scroll lg:max-h-[calc(100vh-61px)]">
+        <aside className="no-print border-r-2 border-shell overflow-y-auto thin-scroll lg:max-h-[calc(100vh-61px)]">
           <div className="p-5 flex flex-col gap-6">
             <div className="flex flex-col gap-3">
               <div className="flex items-baseline justify-between">
                 <div>
-                  <div className="eyebrow text-steel">Discovery</div>
+                  <div className="eyebrow text-blue">Discovery</div>
                   <p className="text-[0.75rem] text-muted mt-0.5">The customer supplies these.</p>
                 </div>
                 <button
@@ -493,7 +494,7 @@ export default function App() {
                     setDiscovery(EMPTY);
                     setParams({ ...DEFAULT_PARAMS });
                   }}
-                  className="text-[0.75rem] text-steel underline underline-offset-2"
+                  className="text-[0.75rem] text-blue underline underline-offset-2"
                 >
                   Clear
                 </button>
@@ -521,9 +522,9 @@ export default function App() {
             </div>
 
             {/* autonomous side, visually separated */}
-            <div className="border border-steel bg-steel-tint/40">
-              <div className="px-4 py-3 border-b border-steel/40">
-                <div className="eyebrow text-steel">Supplied by us</div>
+            <div className="bg-blue-tint hard">
+              <div className="px-4 py-3 border-b-2 border-shell">
+                <div className="eyebrow text-blue">Supplied by us</div>
                 <p className="text-[0.75rem] text-muted mt-1">
                   Placeholders, not commercial figures. Replace before customer use.
                 </p>
@@ -531,10 +532,25 @@ export default function App() {
               <div className="p-4 flex flex-col gap-3">
                 {PARAM_FIELDS.map((f) => (
                   <div key={f.key} className="flex flex-col gap-1">
-                    <label htmlFor={f.key} className="text-[0.8125rem] font-medium">
-                      {f.label}
-                    </label>
-                    {f.help && <p className="question text-amber">{f.help}</p>}
+                    <div className="flex items-baseline justify-between gap-2">
+                      <label htmlFor={f.key} className="text-[0.75rem] font-bold">
+                        {f.label}
+                      </label>
+                      {/* Rationale stays reachable without occupying the rail. */}
+                      {f.help && (
+                        <details className="relative shrink-0">
+                          <summary
+                            className="cursor-pointer list-none text-[0.625rem] font-bold text-blue border-2 border-blue px-1 leading-tight"
+                            aria-label={`Why this value for ${f.label}`}
+                          >
+                            ?
+                          </summary>
+                          <div className="absolute right-0 top-full mt-1 z-20 w-[30ch] bg-panel hard p-2.5 text-[0.6875rem] leading-relaxed font-normal">
+                            {f.help}
+                          </div>
+                        </details>
+                      )}
+                    </div>
                     <input
                       id={f.key}
                       className="field"
@@ -573,10 +589,10 @@ export default function App() {
 
             {/* saved scenarios */}
             <div className="flex flex-col gap-2">
-              <div className="eyebrow text-steel">Saved scenarios</div>
+              <div className="eyebrow text-blue">Saved scenarios</div>
               <button
                 onClick={saveScenario}
-                className="border border-rule bg-panel px-3 py-2 text-[0.8125rem] hover:bg-steel-tint text-left"
+                className="border border-rule bg-panel px-3 py-2 text-[0.8125rem] hover:bg-blue-tint text-left"
               >
                 Save current scenario
               </button>
@@ -615,7 +631,7 @@ export default function App() {
 
             {/* batch upload */}
             <div className="flex flex-col gap-2">
-              <div className="eyebrow text-steel">Batch workbook</div>
+              <div className="eyebrow text-blue">Batch workbook</div>
 
               <input
                 ref={fileInput}
@@ -634,10 +650,10 @@ export default function App() {
                 onClick={() => fileInput.current?.click()}
                 className={`w-full border border-dashed px-4 py-6 text-center transition-colors ${
                   dragging
-                    ? 'border-steel bg-steel-tint'
+                    ? 'border-blue bg-blue-tint'
                     : uploadError
-                      ? 'border-amber bg-amber-tint'
-                      : 'border-rule bg-panel hover:bg-steel-tint/40'
+                      ? 'border-orange bg-orange-tint'
+                      : 'border-rule bg-panel hover:bg-blue-tint/40'
                 } ${busy ? 'opacity-60' : ''}`}
               >
                 <span className="block text-[0.875rem] font-medium">
@@ -649,8 +665,8 @@ export default function App() {
               </button>
 
               {uploadError && (
-                <div className="border border-amber bg-amber-tint px-3 py-2">
-                  <div className="eyebrow text-amber mb-1">Could not read that file</div>
+                <div className="border border-orange bg-orange-tint px-3 py-2">
+                  <div className="eyebrow text-orange mb-1">Could not read that file</div>
                   <p className="text-[0.75rem] whitespace-pre-wrap">{uploadError}</p>
                 </div>
               )}
@@ -663,7 +679,7 @@ export default function App() {
                 {sourceName !== 'Bundled sample portfolio' && (
                   <button
                     onClick={resetPortfolio}
-                    className="text-steel underline underline-offset-2 shrink-0"
+                    className="text-blue underline underline-offset-2 shrink-0"
                   >
                     Reset
                   </button>
@@ -679,19 +695,17 @@ export default function App() {
 
           {/* section navigator */}
           {!documentView && (
-            <nav className="no-print sticky bottom-0 bg-paper border-t border-rule px-5 py-3 flex gap-2 overflow-x-auto">
+            <nav className="no-print sticky bottom-0 bg-paper border-t-2 border-shell px-5 py-3 flex gap-2 overflow-x-auto">
               {SECTIONS.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => setSection(s.id)}
-                  className={`shrink-0 text-left px-3 py-2 border min-w-[8.5rem] ${
-                    section === s.id
-                      ? 'border-steel bg-steel-tint'
-                      : 'border-rule bg-panel hover:bg-steel-tint/50'
+                  className={`btn shrink-0 text-left min-w-[8.5rem] ${
+                    section === s.id ? 'btn-on' : ''
                   }`}
                 >
-                  <div className="eyebrow text-muted">Section {s.n}</div>
-                  <div className="text-[0.8125rem] font-medium">{s.label}</div>
+                  <div className="display text-[0.5rem] opacity-70">{s.n}</div>
+                  <div className="text-[0.75rem] font-bold mt-1">{s.label}</div>
                 </button>
               ))}
             </nav>
@@ -700,20 +714,45 @@ export default function App() {
       </div>
 
       {/* ------------------------------------------------------- footer */}
-      <footer className="border-t border-rule bg-panel px-5 py-4">
-        <p className="text-[0.75rem] text-muted max-w-[100ch] leading-relaxed">
-          <span className="font-semibold text-ink">Scope of this model.</span> It prices labour
-          displacement only. It excludes avoided scaffolding and rope access, avoided shutdown
-          windows, compliance penalty exposure and unplanned downtime, all of which are typically
-          larger than the labour line at industrial scale. Autonomous-side defaults are placeholders
-          requiring replacement with real commercial figures before customer use. The substitution
-          factor is the key uncertainty; 1.0 is deliberately conservative because a docked drone does
-          not spend time mobilising to the asset.
-        </p>
+      {/*
+        The scope limitation is the product, so it stays permanently on screen,
+        but as one scannable line. The full statement sits one click away rather
+        than as a paragraph nobody reads in a live meeting.
+      */}
+      <footer className="no-print border-t-2 border-shell bg-panel px-5 py-2.5">
+        <details className="group">
+          <summary className="flex items-center gap-2 cursor-pointer list-none text-[0.6875rem]">
+            <span className="eyebrow text-orange">Scope</span>
+            <span className="text-muted">
+              Labour displacement only. Defaults are placeholders.
+            </span>
+            <span className="text-blue underline underline-offset-2 ml-auto shrink-0">
+              Full statement
+            </span>
+          </summary>
+          <div className="mt-2 pt-2 border-t border-rule grid gap-2 sm:grid-cols-3 text-[0.6875rem] text-muted leading-relaxed">
+            <p>
+              <span className="font-bold text-ink">Excluded value pools.</span> Avoided scaffolding
+              and rope access, avoided shutdown windows, compliance penalty exposure, unplanned
+              downtime. Each is typically larger than the labour line at industrial scale, so read
+              this as a floor.
+            </p>
+            <p>
+              <span className="font-bold text-ink">Placeholder economics.</span> Every
+              autonomous-side default is a placeholder, not a commercial quote and not an industry
+              benchmark. Replace before customer use.
+            </p>
+            <p>
+              <span className="font-bold text-ink">Key uncertainties.</span> Utilisation and
+              addressable share are the two assumptions neither priced nor supplied by the customer.
+              They decide the case, and Section 04 shows the range.
+            </p>
+          </div>
+        </details>
       </footer>
 
       {dragging && (
-        <div className="fixed inset-0 z-30 bg-steel-tint/90 border-4 border-steel flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-30 bg-blue-tint/90 border-4 border-blue flex items-center justify-center pointer-events-none">
           <p className="text-[1.125rem] font-semibold">Drop the workbook to score it</p>
         </div>
       )}
@@ -755,7 +794,7 @@ function CompareTable({ a, b }: { a: SavedScenario; b: SavedScenario }) {
     <div className="border border-rule bg-panel overflow-x-auto">
       <table className="w-full text-[0.75rem] border-collapse">
         <thead>
-          <tr className="bg-steel-tint">
+          <tr className="bg-blue-tint">
             <th className="text-left px-2 py-1.5 border-b border-rule font-semibold">Line</th>
             <th className="text-right px-2 py-1.5 border-b border-rule font-semibold">{a.name}</th>
             <th className="text-right px-2 py-1.5 border-b border-rule font-semibold">{b.name}</th>
